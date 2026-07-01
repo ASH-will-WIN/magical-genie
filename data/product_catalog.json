@@ -1,0 +1,38 @@
+[
+  {
+    "product_id": "compliance_suite",
+    "name": "Compliance & Risk Management Suite",
+    "description": "Software that helps regulated companies (healthcare, finance) stay audit-ready and reduce compliance risk.",
+    "target_titles": ["Compliance Officer", "VP Compliance", "General Counsel", "CIO", "CISO", "Director of Risk"],
+    "pain_keywords": ["compliance", "audit", "regulation", "HIPAA", "GDPR", "risk", "penalty", "fine", "breach"],
+    "seniority_angles": {
+      "director": "Frame around execution speed and hitting the audit deadline without slipping the timeline.",
+      "vp": "Frame around vendor consolidation, reducing risk exposure across teams, and budget optics with leadership.",
+      "c_suite": "Frame around board liability, regulatory penalties avoided, and compliance readiness as a strategic asset."
+    }
+  },
+  {
+    "product_id": "workforce_platform",
+    "name": "Workforce Management Platform",
+    "description": "HR/workforce software for scaling companies managing rapid headcount growth or restructuring.",
+    "target_titles": ["VP People", "Head of HR", "COO", "CHRO", "Director of Operations"],
+    "pain_keywords": ["hiring", "headcount", "expansion", "restructuring", "layoffs", "workforce", "scaling"],
+    "seniority_angles": {
+      "director": "Frame around not looking bad to leadership when onboarding/scaling timelines slip.",
+      "vp": "Frame around strategic workforce risk and consolidating point solutions into one platform.",
+      "c_suite": "Frame around cost savings at scale and board-level workforce planning visibility."
+    }
+  },
+  {
+    "product_id": "data_infra",
+    "name": "Data Infrastructure & Analytics Platform",
+    "description": "Infrastructure for companies investing heavily in data/AI capabilities after funding or expansion news.",
+    "target_titles": ["CTO", "VP Engineering", "Head of Data", "Director of Engineering"],
+    "pain_keywords": ["funding", "expansion", "AI", "data", "infrastructure", "scale", "investment"],
+    "seniority_angles": {
+      "director": "Frame around shipping the new infrastructure on time without team burnout.",
+      "vp": "Frame around build-vs-buy risk and consolidating vendor sprawl.",
+      "c_suite": "Frame around cost efficiency of infrastructure spend relative to the new funding/expansion."
+    }
+  }
+]
