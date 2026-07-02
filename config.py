@@ -17,7 +17,18 @@ APOLLO_CREDITS_LIMIT = int(os.getenv("APOLLO_CREDITS_LIMIT", "4000"))
 DATABASE_PATH = os.getenv("DATABASE_PATH", str(BASE_DIR / "campaigns.db"))
 TRACKING_BASE_URL = os.getenv("TRACKING_BASE_URL", "https://track.example.com/r")
 
+# Optional lead-fetch testing caps for the Venn (multi-company) pipeline.
+# None (unset) = unlimited, i.e. zero effect -- these exist purely to bound
+# Apollo credit spend while testing against real campaigns, not a permanent
+# product limit.
+_max_lead_fetch_companies = os.getenv("MAX_LEAD_FETCH_COMPANIES")
+MAX_LEAD_FETCH_COMPANIES = int(_max_lead_fetch_companies) if _max_lead_fetch_companies else None
+
+_max_leads_per_campaign = os.getenv("MAX_LEADS_PER_CAMPAIGN")
+MAX_LEADS_PER_CAMPAIGN = int(_max_leads_per_campaign) if _max_leads_per_campaign else None
+
 PRODUCT_CATALOG_PATH = BASE_DIR / "data" / "product_catalog.json"
+ICP_CONFIG_PATH = BASE_DIR / "data" / "icp_config.json"
 
 # Phase 7: LLM pricing, per 1M tokens (input, output)
 LLM_PRICING = {
@@ -47,3 +58,8 @@ def load_product_catalog() -> list[dict]:
 
 def product_ids() -> list[str]:
     return [p["product_id"] for p in load_product_catalog()]
+
+
+def load_icp_config() -> dict:
+    with open(ICP_CONFIG_PATH, "r") as f:
+        return json.load(f)

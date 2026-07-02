@@ -1,0 +1,49 @@
+{
+  "icp_id": "reinvent_hit_v1",
+  "company_type": {
+    "include": [
+      "digital health software vendor",
+      "health-tech SaaS platform",
+      "AI-native health application",
+      "healthcare analytics platform",
+      "clinical/health data platform"
+    ],
+    "exclude": [
+      "hospital / health system (care delivery org)",
+      "physician practice / clinic (care delivery org)",
+      "payer / insurance carrier",
+      "pharma / biotech (unless building internal software tools)",
+      "medical device hardware manufacturer (unless software-attached)"
+    ]
+  },
+  "build_pattern": {
+    "values": ["ground_up_ai_native", "ai_feature_retrofit", "enterprise_platform_ai_expansion"]
+  },
+  "size_band": {
+    "employee_count_min": 1,
+    "employee_count_max": 100,
+    "preferred_range": [10, 50],
+    "soft_ceiling": 200
+  },
+  "vertical_keywords": [
+    "digital health", "health tech", "healthtech", "patient engagement",
+    "care coordination", "clinical workflow", "health data platform",
+    "EHR integration", "HIPAA compliant", "AI health assistant",
+    "healthcare analytics", "claims optimization", "remote patient monitoring"
+  ],
+  "technology_signal_keywords": [
+    "AI", "machine learning", "LLM", "generative AI", "RAG",
+    "predictive analytics", "AI-powered", "AI-driven"
+  ],
+  "buying_trigger_keywords": [
+    "hiring engineers", "engineering velocity", "faster development",
+    "AI feature", "AI roadmap", "digital transformation",
+    "platform rebuild", "new funding round", "product launch",
+    "seeking dev partner", "outsourced development"
+  ],
+  "hard_exclude_industries": [
+    "insurance",
+    "pharmaceuticals",
+    "medical practice"
+  ]
+}

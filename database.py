@@ -67,12 +67,42 @@ CREATE TABLE IF NOT EXISTS usage_log (
     campaign_id INTEGER,
     service TEXT,         -- openai | apollo
     model TEXT,
-    operation TEXT,        -- context_extraction | copy_generation | lead_search | enrichment
+    operation TEXT,        -- context_extraction | copy_generation | lead_search | enrichment | icp_theme_extraction | icp_scoring
     input_tokens INTEGER DEFAULT 0,
     output_tokens INTEGER DEFAULT 0,
     credits_used INTEGER DEFAULT 0,
     cost_usd REAL DEFAULT 0,
     created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS theme_extractions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    campaign_id INTEGER NOT NULL REFERENCES campaigns(id),
+    theme_summary TEXT,
+    affected_problem_space TEXT,          -- JSON array, stored as text
+    vendor_categories_who_benefit TEXT,   -- JSON array, stored as text
+    apollo_keyword_candidates TEXT,       -- JSON array, stored as text
+    created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS icp_candidates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    campaign_id INTEGER NOT NULL REFERENCES campaigns(id),
+    company_name TEXT,
+    domain TEXT,
+    apollo_industry TEXT,
+    apollo_employee_count INTEGER,
+    apollo_description TEXT,
+    prefilter_result TEXT,      -- kept | dropped_at_prefilter
+    prefilter_reason TEXT,
+    score INTEGER,              -- nullable, null if dropped at prefilter
+    score_reason TEXT,
+    exclude_flag BOOLEAN,
+    bucket TEXT,                -- approved | needs_review | rejected | dropped_at_prefilter
+    human_override TEXT,        -- nullable: approved | rejected, set only if a human changed the bucket
+    status TEXT DEFAULT 'pending_review',  -- pending_review | reviewed | leads_fetched
+    created_at TEXT NOT NULL,
+    UNIQUE(campaign_id, domain)
 );
 """
 

@@ -1,0 +1,39 @@
+## God Nodes (most connected - your core abstractions)
+1. `CLAUDE.md — Magical Genie Project Memory` - 21 edges
+2. `get_conn()` - 20 edges
+3. `build_and_score_candidates()` - 15 edges
+4. `log()` - 14 edges
+5. `scrape_article()` - 11 edges
+6. `approve_candidate()` - 10 edges
+7. `main.py — FastAPI backend` - 10 edges
+8. `now_iso()` - 9 edges
+9. `run_campaign()` - 9 edges
+10. `_try_tier()` - 9 edges
+
+
+## Surprising Connections (you probably didn't know these)
+- `services/icp_matching/theme_extraction.py — extract_theme()` --semantically_similar_to--> `services/context.py — LLM intelligence extraction (temp=0.1)`  [INFERRED] [semantically similar]
+  handoff-1-icp-scoring-spec.md → CLAUDE.md
+- `services/icp_matching/scoring.py — score_candidate()/score_candidates_batch()` --semantically_similar_to--> `services/copy.py — per-person copy generation (temp=0.7, parallel)`  [INFERRED] [semantically similar]
+  handoff-1-icp-scoring-spec.md → CLAUDE.md
+- `get_campaign_cost_summary()` --calls--> `get_conn()`  [EXTRACTED]
+  services/usage_tracker.py → database.py
+- `fastapi==0.115.0` --shares_data_with--> `main.py — FastAPI backend`  [INFERRED]
+  requirements.txt → CLAUDE.md
+- `pandas==2.2.3` --shares_data_with--> `frontend.py — Streamlit UI`  [INFERRED]
+  requirements.txt → CLAUDE.md
+
+
+## Suggested Questions
+_Questions this graph is uniquely positioned to answer:_
+
+- **Why does `CLAUDE.md — Magical Genie Project Memory` connect `Project Design Principles (CLAUDE.md)` to `Handoff 2: ICP Pipeline Wiring Spec`, `Testing & Soft-Failure Design`, `Product Catalog & Channel Config`, `Core App Files & Dependencies`?**
+  _High betweenness centrality (0.037) - this node is a cross-community bridge._
+- **Why does `get_conn()` connect `Campaign Pipeline Orchestration` to `ICP Scoring & Usage Tracking`?**
+  _High betweenness centrality (0.024) - this node is a cross-community bridge._
+- **Why does `scrape_article()` connect `ICP Prefilter & Calibration Testing` to `Campaign Pipeline Orchestration`, `Article Context Extraction`?**
+  _High betweenness centrality (0.022) - this node is a cross-community bridge._
+- **What connects `End-to-end test suite. Run with: python campaign_test.py Requires uvicorn main:a`, `Environment variable management + product catalog loading.`, `SQLite schema + connection management. Zero-DevOps choice for MVP. Migrate to Po` to the rest of the system?**
+  _57 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `Campaign Pipeline Orchestration` be split into smaller, more focused modules?**
+  _Cohesion score 0.10202020202020202 - nodes in this community are weakly interconnected._

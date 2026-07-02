@@ -1,0 +1,137 @@
+{
+  "campaign_test.py": {
+    "mtime": 1782934015.8520627,
+    "ast_hash": "4545de3e0e78f46393ebb0ab87c67b8c",
+    "semantic_hash": "4545de3e0e78f46393ebb0ab87c67b8c"
+  },
+  "config.py": {
+    "mtime": 1783001616.3311703,
+    "ast_hash": "ca73f3ad05d15e5578d05707a8e39dd0",
+    "semantic_hash": "ca73f3ad05d15e5578d05707a8e39dd0"
+  },
+  "data/icp_config.json": {
+    "mtime": 1782942922.3909936,
+    "ast_hash": "2ca84a173e55ea87b99ba114b8a2da7e",
+    "semantic_hash": "2ca84a173e55ea87b99ba114b8a2da7e"
+  },
+  "data/product_catalog.json": {
+    "mtime": 1782934016.1436856,
+    "ast_hash": "82afa9758ad79accea0ed1fa2f5fe0c6",
+    "semantic_hash": "82afa9758ad79accea0ed1fa2f5fe0c6"
+  },
+  "database.py": {
+    "mtime": 1782944822.483069,
+    "ast_hash": "40d4efc6e9c8a41612979d6490451002",
+    "semantic_hash": "40d4efc6e9c8a41612979d6490451002"
+  },
+  "frontend.py": {
+    "mtime": 1783001729.0685246,
+    "ast_hash": "51ff3a0c42c2f7ab89c4fe211355fc2d",
+    "semantic_hash": "51ff3a0c42c2f7ab89c4fe211355fc2d"
+  },
+  "main.py": {
+    "mtime": 1782949983.9802551,
+    "ast_hash": "b6de878cda1676c2b008d0fba895c721",
+    "semantic_hash": "b6de878cda1676c2b008d0fba895c721"
+  },
+  "services/__init__.py": {
+    "mtime": 1782934016.0275445,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "services/apollo.py": {
+    "mtime": 1782996369.8997743,
+    "ast_hash": "eb18e48806ecff44b0c5d71dc8eba425",
+    "semantic_hash": "eb18e48806ecff44b0c5d71dc8eba425"
+  },
+  "services/context.py": {
+    "mtime": 1782935507.8797057,
+    "ast_hash": "6b52a2bc21a189a3b188979b02880f53",
+    "semantic_hash": "6b52a2bc21a189a3b188979b02880f53"
+  },
+  "services/copy.py": {
+    "mtime": 1782935549.3144588,
+    "ast_hash": "13ee90a9e91a823a1195ca6cc48708d7",
+    "semantic_hash": "13ee90a9e91a823a1195ca6cc48708d7"
+  },
+  "services/icp_matching/__init__.py": {
+    "mtime": 1782941849.1093855,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "services/icp_matching/pipeline.py": {
+    "mtime": 1783001935.6624742,
+    "ast_hash": "8859f798be24bd070c2ba5d6c59fd7a3",
+    "semantic_hash": "8859f798be24bd070c2ba5d6c59fd7a3"
+  },
+  "services/icp_matching/prefilter.py": {
+    "mtime": 1782941854.9420595,
+    "ast_hash": "8724eb4c96140f0c47ecd65c6cfc3697",
+    "semantic_hash": "8724eb4c96140f0c47ecd65c6cfc3697"
+  },
+  "services/icp_matching/scoring.py": {
+    "mtime": 1782944890.857133,
+    "ast_hash": "ddc1d70c0f9bb5e4e496962ef197cbf0",
+    "semantic_hash": "ddc1d70c0f9bb5e4e496962ef197cbf0"
+  },
+  "services/icp_matching/test_calibration.py": {
+    "mtime": 1782943090.1182263,
+    "ast_hash": "2a291d20670aaf056b3970126f279e67",
+    "semantic_hash": "2a291d20670aaf056b3970126f279e67"
+  },
+  "services/icp_matching/theme_extraction.py": {
+    "mtime": 1782944875.1285708,
+    "ast_hash": "8e8fe1a77a640dcfbc380dc21afb08b6",
+    "semantic_hash": "8e8fe1a77a640dcfbc380dc21afb08b6"
+  },
+  "services/logging_utils.py": {
+    "mtime": 1783001950.5508041,
+    "ast_hash": "15a4791a114e8fd68894991d359dffe4",
+    "semantic_hash": "15a4791a114e8fd68894991d359dffe4"
+  },
+  "services/scraper.py": {
+    "mtime": 1782934016.0114956,
+    "ast_hash": "cb1ba2fdbb48ec7cef6164467d037117",
+    "semantic_hash": "cb1ba2fdbb48ec7cef6164467d037117"
+  },
+  "services/tracker.py": {
+    "mtime": 1782934016.063031,
+    "ast_hash": "0ff85afaeb88a6f71a2c9854bd2fb18b",
+    "semantic_hash": "0ff85afaeb88a6f71a2c9854bd2fb18b"
+  },
+  "services/usage_tracker.py": {
+    "mtime": 1782934016.0800302,
+    "ast_hash": "4622af21e0f1eb516ee0584548321cd1",
+    "semantic_hash": "4622af21e0f1eb516ee0584548321cd1"
+  },
+  "CLAUDE.md": {
+    "mtime": 1782934015.9350796,
+    "ast_hash": "682172c521ab9e91c0d9354211c6b529",
+    "semantic_hash": "682172c521ab9e91c0d9354211c6b529"
+  },
+  "README.md": {
+    "mtime": 1782934015.9208946,
+    "ast_hash": "35b8604d6d6a482f5ef8cbe2001a8f99",
+    "semantic_hash": "35b8604d6d6a482f5ef8cbe2001a8f99"
+  },
+  "VERIFICATION_RUNBOOK.md": {
+    "mtime": 1782941176.065827,
+    "ast_hash": "b27fd9308685da8b2a3aad92b36107e6",
+    "semantic_hash": "b27fd9308685da8b2a3aad92b36107e6"
+  },
+  "handoff-1-icp-scoring-spec.md": {
+    "mtime": 1782941366.69535,
+    "ast_hash": "c2831cf02635d3b7cab658b3f3a40a23",
+    "semantic_hash": "c2831cf02635d3b7cab658b3f3a40a23"
+  },
+  "handoff-2-pipeline-wiring-spec.md": {
+    "mtime": 1782944041.9945982,
+    "ast_hash": "d50931d34384840c938dbad15a156b81",
+    "semantic_hash": "d50931d34384840c938dbad15a156b81"
+  },
+  "requirements.txt": {
+    "mtime": 1782934015.8651385,
+    "ast_hash": "58a7f0424141bea50c7462b5402741dd",
+    "semantic_hash": "58a7f0424141bea50c7462b5402741dd"
+  }
+}

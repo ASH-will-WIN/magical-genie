@@ -14,6 +14,7 @@ fails, fix it before moving to the next section — later sections assume
 earlier ones pass.
 
 Two things to hold in tension while doing this:
+
 1. **Don't assume the rebuild is correct just because it runs.** It was
    written from a prose summary, not the original code, so subtle behavioral
    gaps are the likely failure mode, not crashes. Section 4 exists
@@ -143,51 +144,57 @@ Cross-check `database.py`'s `SCHEMA` string against this table-by-table spec.
 For each table, confirm every listed column exists with a compatible type.
 
 ### `campaigns`
-| column | type | notes |
-|---|---|---|
-| id | INTEGER PK AUTOINCREMENT | |
-| url | TEXT NOT NULL | |
-| industry | TEXT | nullable, currently unused by the pipeline — that's fine, it's a placeholder from the original schema |
-| geo | TEXT | nullable, same as above |
-| status | TEXT NOT NULL DEFAULT 'analyzing' | **must only ever be set to one of:** `analyzing`, `context_extracted`, `leads_found`, `generated`, `failed`. No other value (e.g. `completed`, `done`, `success`) should appear anywhere in `main.py`. |
-| created_at | TEXT NOT NULL | ISO 8601 |
+
+| column     | type                              | notes                                                                                                                                                                                                  |
+| ---------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| id         | INTEGER PK AUTOINCREMENT          |                                                                                                                                                                                                        |
+| url        | TEXT NOT NULL                     |                                                                                                                                                                                                        |
+| industry   | TEXT                              | nullable, currently unused by the pipeline — that's fine, it's a placeholder from the original schema                                                                                                  |
+| geo        | TEXT                              | nullable, same as above                                                                                                                                                                                |
+| status     | TEXT NOT NULL DEFAULT 'analyzing' | **must only ever be set to one of:** `analyzing`, `context_extracted`, `leads_found`, `generated`, `failed`. No other value (e.g. `completed`, `done`, `success`) should appear anywhere in `main.py`. |
+| created_at | TEXT NOT NULL                     | ISO 8601                                                                                                                                                                                               |
 
 ```bash
 grep -n 'set_status(' main.py
 ```
+
 - [ ] Every string literal passed to `set_status(...)` is one of the 5 values above. If you see anything else, that's a regression — fix it to reuse `"generated"` for "pipeline completed, possibly with zero leads" cases (no_domain, zero_leads), matching the original 5-state design.
 
 ### `contexts`
-| column | notes |
-|---|---|
-| campaign_id | FK to campaigns |
-| entity | company name |
-| location | **derived/computed display string**, e.g. `"Detroit, MI, USA"` — do not expect this to be an LLM-extracted field directly; it's built from `city`/`state`/`country` on the `CampaignContext` Pydantic model via a `@computed_field`. Confirm this exists in `services/context.py`. |
-| catalyst | one-sentence news event |
-| pain_points | JSON-encoded array, **must contain exactly 3 items**, enforced via `Field(..., min_length=3, max_length=3)` on `CampaignContext.pain_points` |
-| product_id | must be one of the ids in `data/product_catalog.json` — enforced via a `field_validator` |
-| urgency_score | integer 1-10, enforced via `Field(..., ge=1, le=10)` |
+
+| column        | notes                                                                                                                                                                                                                                                                              |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| campaign_id   | FK to campaigns                                                                                                                                                                                                                                                                    |
+| entity        | company name                                                                                                                                                                                                                                                                       |
+| location      | **derived/computed display string**, e.g. `"Detroit, MI, USA"` — do not expect this to be an LLM-extracted field directly; it's built from `city`/`state`/`country` on the `CampaignContext` Pydantic model via a `@computed_field`. Confirm this exists in `services/context.py`. |
+| catalyst      | one-sentence news event                                                                                                                                                                                                                                                            |
+| pain_points   | JSON-encoded array, **must contain exactly 3 items**, enforced via `Field(..., min_length=3, max_length=3)` on `CampaignContext.pain_points`                                                                                                                                       |
+| product_id    | must be one of the ids in `data/product_catalog.json` — enforced via a `field_validator`                                                                                                                                                                                           |
+| urgency_score | integer 1-10, enforced via `Field(..., ge=1, le=10)`                                                                                                                                                                                                                               |
 
 - [ ] Confirm the min/max=3 constraint on `pain_points` in `services/context.py`
 - [ ] Confirm the `product_id` validator actually calls `config.product_ids()` and raises if not found
 - [ ] Confirm `urgency_score` bounds
 
 ### `leads`
-| column | notes |
-|---|---|
-| apollo_id | |
-| seniority | must be normalized to exactly one of `director`, `vp`, `c_suite` — never Apollo's raw seniority string. Check `services/apollo.py`'s `normalize_seniority()`. |
+
+| column                         | notes                                                                                                                                                                                                         |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| apollo_id                      |                                                                                                                                                                                                               |
+| seniority                      | must be normalized to exactly one of `director`, `vp`, `c_suite` — never Apollo's raw seniority string. Check `services/apollo.py`'s `normalize_seniority()`.                                                 |
 | UNIQUE(campaign_id, apollo_id) | prevents duplicate leads per campaign — confirm this constraint exists in the schema and that `main.py` uses `INSERT OR IGNORE` when inserting leads (not a plain `INSERT`, which would crash on a duplicate) |
 
 ### `creatives`
-| column | notes |
-|---|---|
-| channel | one of `email`, `whatsapp`, `google_ads` — confirm exactly these 3 string values are used consistently across `services/copy.py`, `main.py`, and `frontend.py` |
-| subject_line | nullable — WhatsApp and Google Ads copy must NOT have a subject line (see Section 4.4) |
-| body_text | NOT NULL |
-| tracking_url | built via `services/tracker.py`, must be unique per lead+channel combination |
+
+| column       | notes                                                                                                                                                          |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| channel      | one of `email`, `whatsapp`, `google_ads` — confirm exactly these 3 string values are used consistently across `services/copy.py`, `main.py`, and `frontend.py` |
+| subject_line | nullable — WhatsApp and Google Ads copy must NOT have a subject line (see Section 4.4)                                                                         |
+| body_text    | NOT NULL                                                                                                                                                       |
+| tracking_url | built via `services/tracker.py`, must be unique per lead+channel combination                                                                                   |
 
 ### `clicks` and `usage_log`
+
 - [ ] `clicks` — confirm `main.py`'s `/click` endpoint never raises even if
       the insert fails (best-effort logging, wrapped in try/except, returns
       `{"status": "logging_failed", ...}` rather than a 500)
@@ -209,6 +216,7 @@ rebuild. Use mocks (no API cost) unless you have real keys and want to
 spend a few cents confirming live behavior.
 
 ### 4.1 — Phase 1: Foundation
+
 - [ ] `.env.example` documents all required env vars: `OPENAI_API_KEY`, `APOLLO_API_KEY`, `APOLLO_CREDITS_LIMIT`, `DATABASE_PATH`, `TRACKING_BASE_URL`
 - [ ] `config.py` loads these via `python-dotenv` and exposes `LLM_PRICING`, `APOLLO_CREDIT_COSTS`, `URGENCY_RUBRIC`, `load_product_catalog()`, `product_ids()`
 - [ ] `data/product_catalog.json` has at least one product with `product_id`, `name`, `description`, `target_titles`, `pain_keywords`, and `seniority_angles` containing all 3 keys: `director`, `vp`, `c_suite`
@@ -225,6 +233,7 @@ print(f'{len(cat)} products validated OK')
 ```
 
 ### 4.2 — Phase 2: Article Intelligence
+
 Original spec requirements to verify against `services/scraper.py` and `services/context.py`:
 
 - [ ] Scraping uses `httpx` (async) + `trafilatura` (DOM-aware extraction) — not `BeautifulSoup`/`requests`/`readability-lxml` or anything else
@@ -243,10 +252,12 @@ Original spec requirements to verify against `services/scraper.py` and `services
   - 1-2 = no deadline
 
   Confirm `config.URGENCY_RUBRIC` matches this text and is actually included in the prompt built by `services/context.py::_build_prompt`.
+
 - [ ] Exactly 3 pain points, not "up to 3" or "at least 3" — `Field(..., min_length=3, max_length=3)`
 - [ ] Product mapping is constrained to the catalog (no hallucination possible) — the `product_id` field_validator must raise `ValueError` for any id not in `config.product_ids()`
 
 Mocked test to run:
+
 ```bash
 python3 -c "
 import asyncio
@@ -275,9 +286,11 @@ async def run():
 asyncio.run(run())
 "
 ```
+
 - [ ] Output shows `Phase 2 checks passed` with no exception
 
 Also confirm hallucination protection actually works:
+
 ```bash
 python3 -c "
 from pydantic import ValidationError
@@ -292,6 +305,7 @@ except ValidationError:
 ```
 
 ### 4.3 — Phase 3: Lead Discovery (Apollo)
+
 - [ ] Domain resolution tries Apollo org search first, falls back to DNS-pattern guessing (`_guess_domain`) only on failure — check `services/apollo.py::resolve_domain`
 - [ ] Lead search uses `/mixed_people/search` (the FREE endpoint) — grep to confirm no other Apollo endpoint is used for lead fetching:
   ```bash
@@ -308,6 +322,7 @@ except ValidationError:
 - [ ] Rate-limit handling: HTTP 429 triggers a 2-second wait and exactly one retry, both in `resolve_domain` and in the lead search path (`_search_people`)
 
 Mocked cascade test:
+
 ```bash
 python3 -c "
 import asyncio
@@ -335,16 +350,18 @@ async def run():
 asyncio.run(run())
 "
 ```
+
 - [ ] Output confirms `calls == ['Detroit', 'MI']` — i.e. it stopped at the state tier once results were found, and never needed the no-filter tier
 
 ### 4.4 — Phase 4: Personalized Copy Generation
+
 - [ ] Copy is genuinely different per seniority, not `{first_name}` mail merge — confirm `services/copy.py::_prompt()` pulls a seniority-specific `angle` from `product["seniority_angles"][lead["seniority"]]` and includes it in every prompt
 - [ ] Three channels generated per lead: `email`, `whatsapp`, `google_ads` — confirm `CHANNELS` list in `copy.py`
 - [ ] **Character/word limits enforced, not just prompted for.** This was a gap in an earlier version — confirm actual Pydantic/function-level enforcement exists, not just instructions embedded in the LLM prompt text:
   - Email subject_line ≤ 60 chars (`Field(None, max_length=60)` on `ChannelCopy.subject_line`)
   - WhatsApp body ≤ 25 words AND has no subject line
   - Google Ads body ≤ 90 chars AND has no subject line
-  
+
   Confirm `CHANNEL_LIMITS` dict and `_enforce_channel_constraints()` function exist in `services/copy.py`, and that `_generate_one()` actually calls it (with a retry) rather than just trusting the LLM's output.
 
   ```bash
@@ -369,7 +386,9 @@ asyncio.run(run())
       print('OK: google_ads subject_line correctly rejected')
   "
   ```
+
   - [ ] Both checks print `OK`
+
 - [ ] Parallel generation via `asyncio.gather`, not sequential — confirm in `generate_copy_for_lead()` and `generate_all_copy()`. Sequential generation of 12 leads × 3 channels would be a real regression (36 seconds vs. ~4 seconds per the original spec's UX requirement).
 - [ ] `temperature=0.7` for copy generation (creative variation) — grep to confirm, and confirm it's distinct from the 0.1 used in context extraction
 - [ ] UTM tracking URL embedded per lead+channel — confirm `services/tracker.py::build_tracking_url()` includes `cid`, `lid`, and channel-specific `utm_source`
@@ -378,9 +397,11 @@ asyncio.run(run())
   ```bash
   grep -n "return_exceptions=True" services/copy.py
   ```
+
   - [ ] Should appear twice (once per function)
 
 ### 4.5 — Phase 5: Full Pipeline + UI
+
 - [ ] `main.py`'s `/campaign` endpoint runs the phases in order: scrape → context extraction → domain resolution → lead search → parallel copy generation → persist, and updates `campaigns.status` at each stage (see Section 3)
 - [ ] Every failure branch returns HTTP 200 with a structured `status` field — **never a 500**. Confirm this by re-running the mocked failure-path tests below.
 - [ ] Streamlit UI (`frontend.py`) uses `st.session_state` to hold the last result so re-rendering the page (e.g. expanding a lead row) doesn't re-call the API
@@ -388,6 +409,7 @@ asyncio.run(run())
 - [ ] No raw Python stack traces are ever shown in the Streamlit UI — errors go through `st.error(...)` with a human-readable message
 
 Full pipeline mocked test (adjust mock leads/context to taste, but confirm the shape of what comes back):
+
 ```bash
 rm -f campaigns.db
 python3 -c "
@@ -427,9 +449,11 @@ with patch('main.scrape_article', new=AsyncMock(return_value=ScrapeResult(text='
         print('Full pipeline (happy path) verified end-to-end')
 "
 ```
+
 - [ ] Prints `Full pipeline (happy path) verified end-to-end` with no assertion errors
 
 Failure-path sweep (all 5 must return HTTP 200 with the listed status, never 500):
+
 ```bash
 python3 -c "
 from unittest.mock import AsyncMock, patch
@@ -470,9 +494,11 @@ with TestClient(main.app) as client:
         print(('OK ' if ok else 'FAIL '), expected, '-> got', code, status)
 "
 ```
+
 - [ ] All 5 lines print `OK`
 
 ### 4.6 — Phase 6: Testing
+
 - [ ] `campaign_test.py` exists and covers all 7 original test cases: health check, scrape, analyze, full campaign, database integrity, click logging, campaigns list
 - [ ] Running it against a **real, non-paywalled article URL** with real API keys should pass all 7 (edit `TEST_URL` at the top of the file first)
   ```bash
@@ -481,10 +507,12 @@ with TestClient(main.app) as client:
   # terminal 2
   python3 campaign_test.py
   ```
+
   - [ ] `7/7 tests passed`
 - [ ] .gitignore excludes `.env`, `campaigns.db`, `__pycache__`
 
 ### 4.7 — Phase 7: Cost Dashboard (Planned, Not Started)
+
 This phase was **never completed in the original project** — don't expect
 it to be fully working, and don't treat its absence from `main.py`/
 `frontend.py` as a bug.
@@ -496,6 +524,7 @@ it to be fully working, and don't treat its absence from `main.py`/
   ```bash
   grep -rn "usage_tracker" main.py frontend.py
   ```
+
   - [ ] Expect **zero matches**. If you find matches, someone already
         started wiring this in — verify it doesn't break the soft-fail
         guarantees (cost logging failure must never fail a campaign).

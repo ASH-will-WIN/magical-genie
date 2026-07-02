@@ -18,6 +18,8 @@ if "result" not in st.session_state:
     st.session_state.result = None
 if "show_manual_paste" not in st.session_state:
     st.session_state.show_manual_paste = False
+if "pending_message" not in st.session_state:
+    st.session_state.pending_message = None
 
 url = st.text_input("News article URL", placeholder="https://...")
 
@@ -50,6 +52,10 @@ if st.session_state.show_manual_paste:
 
 result = st.session_state.result
 
+if st.session_state.pending_message:
+    st.warning(st.session_state.pending_message)
+    st.session_state.pending_message = None
+
 if result:
     status = result.get("status")
 
@@ -61,6 +67,10 @@ if result:
         st.warning("Couldn't resolve a domain for this company, so no leads were found. Context below is still useful.")
     elif status == "zero_leads":
         st.info("No verified leads found at this company (valid result, not an error).")
+    elif status == "no_candidates":
+        st.warning("Couldn't identify a market theme for this article, so no ICP candidates could be found. Context below is still useful.")
+    elif status == "awaiting_review":
+        st.info("Some candidate companies need review before leads can be fetched — see the Needs Review queue below.")
 
     ctx = result.get("context")
     if ctx:
@@ -72,6 +82,55 @@ if result:
         c4.metric("Location", ctx.get("location") or "—")
         st.write(f"**Catalyst:** {ctx['catalyst']}")
         st.write("**Pain points:** " + " · ".join(ctx["pain_points"]))
+
+    theme = result.get("theme")
+    if theme:
+        st.write(f"**Market theme:** {theme['theme_summary']}")
+
+    candidates = result.get("candidates") or []
+    needs_review = [c for c in candidates if c["bucket"] == "needs_review" and not c.get("human_override")]
+    approved = [c for c in candidates if c["bucket"] == "approved" or c.get("human_override") == "approved"]
+    rejected = [c for c in candidates if c["bucket"] in ("rejected", "dropped_at_prefilter") or c.get("human_override") == "rejected"]
+
+    if needs_review:
+        st.subheader(f"🔍 Needs Review ({len(needs_review)})")
+        campaign_id = result["campaign_id"]
+        for c in needs_review:
+            with st.expander(f"{c['company_name']} ({c['domain']}) — score {c['score']}"):
+                st.write(f"**Industry:** {c.get('apollo_industry') or '—'}  |  **Employees:** {c.get('apollo_employee_count') or '—'}")
+                st.write(f"**Score reason:** {c.get('score_reason') or '—'}")
+                if c.get("apollo_description"):
+                    st.caption(c["apollo_description"][:500])
+                b1, b2 = st.columns(2)
+                if b1.button("✅ Approve", key=f"approve_{c['id']}"):
+                    with st.spinner(f"Fetching leads for {c['company_name']}..."):
+                        try:
+                            resp = requests.post(f"{API_BASE}/campaigns/{campaign_id}/candidates/{c['id']}/approve", timeout=60)
+                            resp.raise_for_status()
+                            data = resp.json()
+                            c["human_override"] = "approved"
+                            st.session_state.result["leads"] = st.session_state.result.get("leads", []) + data.get("results", [])
+                            if data.get("message"):
+                                st.session_state.pending_message = data["message"]
+                            st.rerun()
+                        except requests.RequestException as e:
+                            st.error(f"Approve failed: {e}")
+                if b2.button("❌ Reject", key=f"reject_{c['id']}"):
+                    try:
+                        resp = requests.post(f"{API_BASE}/campaigns/{campaign_id}/candidates/{c['id']}/reject", timeout=30)
+                        resp.raise_for_status()
+                        c["human_override"] = "rejected"
+                        st.rerun()
+                    except requests.RequestException as e:
+                        st.error(f"Reject failed: {e}")
+
+    if approved or rejected:
+        with st.expander(f"📋 Auto-decided candidates ({len(approved)} approved, {len(rejected)} rejected)"):
+            for c in approved:
+                st.write(f"✅ **{c['company_name']}** ({c['domain']}) — score {c.get('score')} — {c.get('score_reason') or ''}")
+            for c in rejected:
+                reason = c.get("score_reason") or c.get("prefilter_reason") or "—"
+                st.write(f"❌ **{c['company_name']}** ({c['domain']}) — score {c.get('score')} — {reason}")
 
     leads = result.get("leads", [])
     if leads:
