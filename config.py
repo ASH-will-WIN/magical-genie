@@ -17,33 +17,71 @@ APOLLO_CREDITS_LIMIT = int(os.getenv("APOLLO_CREDITS_LIMIT", "4000"))
 DATABASE_PATH = os.getenv("DATABASE_PATH", str(BASE_DIR / "campaigns.db"))
 TRACKING_BASE_URL = os.getenv("TRACKING_BASE_URL", "https://track.example.com/r")
 
-# Optional lead-fetch testing caps for the Venn (multi-company) pipeline.
-# None (unset) = unlimited, i.e. zero effect -- these exist purely to bound
-# Apollo credit spend while testing against real campaigns, not a permanent
-# product limit.
-_max_lead_fetch_companies = os.getenv("MAX_LEAD_FETCH_COMPANIES")
-MAX_LEAD_FETCH_COMPANIES = int(_max_lead_fetch_companies) if _max_lead_fetch_companies else None
+SETTINGS_PATH = BASE_DIR / "data" / "settings.json"
 
-_max_leads_per_campaign = os.getenv("MAX_LEADS_PER_CAMPAIGN")
-MAX_LEADS_PER_CAMPAIGN = int(_max_leads_per_campaign) if _max_leads_per_campaign else None
+DEFAULT_SETTINGS = {
+    "approve_threshold": 70,
+    "review_threshold": 40,
+    "max_lead_fetch_companies": None,
+    "max_leads_per_campaign": None,
+    "llm_pricing": {
+        "gpt-4o-mini": {"input": 0.15, "output": 0.60},
+        "gpt-4o": {"input": 5.00, "output": 15.00},
+    },
+    "apollo_credit_costs": {"email": 1, "phone": 8},
+    "apollo_credit_cost_usd": 0.0206,
+}
+
+
+def load_settings() -> dict:
+    """Runtime-editable settings (thresholds, testing caps, pricing).
+    Falls back to DEFAULT_SETTINGS if the file doesn't exist yet (first run),
+    and back-fills any keys missing from an older settings.json so adding a
+    new setting never breaks existing installs."""
+    if not SETTINGS_PATH.exists():
+        return dict(DEFAULT_SETTINGS)
+    with open(SETTINGS_PATH, "r") as f:
+        saved = json.load(f)
+    merged = dict(DEFAULT_SETTINGS)
+    merged.update(saved)
+    return merged
+
+
+def save_settings(settings: dict) -> None:
+    SETTINGS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with open(SETTINGS_PATH, "w") as f:
+        json.dump(settings, f, indent=2)
+
+
+def get_approve_threshold() -> int:
+    return load_settings()["approve_threshold"]
+
+
+def get_review_threshold() -> int:
+    return load_settings()["review_threshold"]
+
+
+def get_max_lead_fetch_companies() -> int | None:
+    return load_settings()["max_lead_fetch_companies"]
+
+
+def get_max_leads_per_campaign() -> int | None:
+    return load_settings()["max_leads_per_campaign"]
+
+
+def get_llm_pricing() -> dict:
+    return load_settings()["llm_pricing"]
+
+
+def get_apollo_credit_costs() -> dict:
+    return load_settings()["apollo_credit_costs"]
+
+
+def get_apollo_credit_cost_usd() -> float:
+    return load_settings()["apollo_credit_cost_usd"]
 
 PRODUCT_CATALOG_PATH = BASE_DIR / "data" / "product_catalog.json"
 ICP_CONFIG_PATH = BASE_DIR / "data" / "icp_config.json"
-
-# Phase 7: LLM pricing, per 1M tokens (input, output)
-LLM_PRICING = {
-    "gpt-4o-mini": {"input": 0.15, "output": 0.60},
-    "gpt-4o": {"input": 5.00, "output": 15.00},
-}
-
-# Apollo enrichment credit costs (only relevant if enrichment endpoints are used)
-APOLLO_CREDIT_COSTS = {
-    "email": 1,
-    "phone": 8,
-}
-
-# Apollo credit cost in USD (derived from plan: $99/mo for 4,800 credits ≈ $0.0206/credit)
-APOLLO_CREDIT_COST_USD = 0.0206
 
 URGENCY_RUBRIC = """
 9-10 = deadline within 3 months

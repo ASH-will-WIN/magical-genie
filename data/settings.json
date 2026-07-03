@@ -1,0 +1,12 @@
+{
+  "approve_threshold": 70,
+  "review_threshold": 40,
+  "max_lead_fetch_companies": null,
+  "max_leads_per_campaign": null,
+  "llm_pricing": {
+    "gpt-4o-mini": {"input": 0.15, "output": 0.60},
+    "gpt-4o": {"input": 5.00, "output": 15.00}
+  },
+  "apollo_credit_costs": {"email": 1, "phone": 8},
+  "apollo_credit_cost_usd": 0.0206
+}
