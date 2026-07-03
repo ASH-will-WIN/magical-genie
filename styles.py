@@ -19,7 +19,7 @@ _BASE_CSS = """
     font-family: 'JetBrains Mono', monospace;
 }
 .gs-signal-track {
-    width: 100%;
+    width: 100%%;
     height: 8px;
     background: %(track)s;
     border-radius: 999px;
