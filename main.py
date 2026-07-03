@@ -11,6 +11,7 @@ import json
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
+from config import OPENAI_API_KEY, APOLLO_API_KEY
 from database import get_conn, init_db, now_iso
 from services.context import extract_context
 from services.icp_matching.pipeline import (
@@ -38,6 +39,15 @@ def startup():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/health/keys")
+def health_keys():
+    """Presence-only check for API key configuration -- never returns the
+    key values themselves. Used by the Settings page's connection-status
+    panel so a misconfigured .env surfaces immediately instead of failing
+    silently deep in a pipeline run later."""
+    return {"openai": bool(OPENAI_API_KEY), "apollo": bool(APOLLO_API_KEY)}
 
 
 @app.post("/scrape")
