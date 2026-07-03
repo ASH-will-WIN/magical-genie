@@ -17,7 +17,8 @@ import json
 
 import asyncio
 
-from config import MAX_LEAD_FETCH_COMPANIES, MAX_LEADS_PER_CAMPAIGN, load_icp_config, load_product_catalog
+import config
+from config import load_icp_config, load_product_catalog
 from database import get_conn, now_iso
 from services.apollo import find_leads, search_organizations
 from services.copy import generate_all_copy
@@ -27,8 +28,6 @@ from services.icp_matching.theme_extraction import extract_theme
 from services.logging_utils import log
 from services.scraper import scrape_article
 
-APPROVE_THRESHOLD = 70
-REVIEW_THRESHOLD = 40
 CLUSTER_LABELS = ["article-only", "icp-only", "blended"]
 
 
@@ -50,13 +49,16 @@ def _campaign_lead_fetch_counts(campaign_id: int) -> tuple[int, int]:
 
 def _lead_fetch_cap_reason(campaign_id: int) -> str | None:
     """Returns a human-readable reason string if either testing cap
-    (MAX_LEAD_FETCH_COMPANIES / MAX_LEADS_PER_CAMPAIGN, both optional /
-    None = unlimited) is already reached for this campaign, else None."""
+    (max_lead_fetch_companies / max_leads_per_campaign, both optional /
+    None = unlimited, editable at runtime via data/settings.json) is already
+    reached for this campaign, else None."""
     companies_fetched, total_leads = _campaign_lead_fetch_counts(campaign_id)
-    if MAX_LEAD_FETCH_COMPANIES is not None and companies_fetched >= MAX_LEAD_FETCH_COMPANIES:
-        return f"MAX_LEAD_FETCH_COMPANIES ({MAX_LEAD_FETCH_COMPANIES}) reached ({companies_fetched} companies already fetched)"
-    if MAX_LEADS_PER_CAMPAIGN is not None and total_leads >= MAX_LEADS_PER_CAMPAIGN:
-        return f"MAX_LEADS_PER_CAMPAIGN ({MAX_LEADS_PER_CAMPAIGN}) reached ({total_leads} leads already found)"
+    max_companies = config.get_max_lead_fetch_companies()
+    max_leads = config.get_max_leads_per_campaign()
+    if max_companies is not None and companies_fetched >= max_companies:
+        return f"max_lead_fetch_companies ({max_companies}) reached ({companies_fetched} companies already fetched)"
+    if max_leads is not None and total_leads >= max_leads:
+        return f"max_leads_per_campaign ({max_leads}) reached ({total_leads} leads already found)"
     return None
 
 
@@ -92,9 +94,9 @@ def _maybe_advance_campaign_status(campaign_id: int) -> None:
 def _bucket(score: int, exclude: bool) -> str:
     if exclude:
         return "rejected"
-    if score >= APPROVE_THRESHOLD:
+    if score >= config.get_approve_threshold():
         return "approved"
-    if score >= REVIEW_THRESHOLD:
+    if score >= config.get_review_threshold():
         return "needs_review"
     return "rejected"
 
