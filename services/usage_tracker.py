@@ -7,10 +7,11 @@ continue (never raise — cost logging is best-effort, per CLAUDE.md).
 """
 from database import get_conn, now_iso
 import config
+from config import get_llm_pricing, get_apollo_credit_costs
 
 
 def log_llm_usage(campaign_id: int, model: str, operation: str, input_tokens: int, output_tokens: int):
-    pricing = config.get_llm_pricing().get(model)
+    pricing = get_llm_pricing().get(model)
     if pricing is None:
         print(f"[usage_tracker] WARNING: unknown model '{model}', logging cost=$0")
         cost = 0.0
@@ -30,7 +31,8 @@ def log_llm_usage(campaign_id: int, model: str, operation: str, input_tokens: in
 
 
 def log_apollo_usage(campaign_id: int, operation: str, emails: int = 0, phones: int = 0):
-    credits = emails * config.get_apollo_credit_costs()["email"] + phones * config.get_apollo_credit_costs()["phone"]
+    costs = get_apollo_credit_costs()
+    credits = emails * costs["email"] + phones * costs["phone"]
     try:
         with get_conn() as conn:
             conn.execute(
