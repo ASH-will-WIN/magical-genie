@@ -93,12 +93,13 @@ services/
 - Product catalog requires a restart to change (no hot-reload).
 - Only top-of-funnel click tracking; no click-to-conversion.
 
-## graphify
+## graphify (for Claude, not the user — an internal research step)
 
-This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships. `graphify` is a CLI tool Claude runs itself to orient in the codebase before reading raw files — the user never needs to type these commands.
 
-Rules:
+Rules (apply to Claude only):
 - For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- Run this BEFORE using Read/Grep/Glob on this project's source files — not after, not "when convenient." If a hook reminder about graphify appears, that means a query/explain call was skipped and should happen now, before continuing.
 - If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).

@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from config import OPENAI_API_KEY, load_product_catalog
 from services.tracker import build_tracking_url
+from services.usage_tracker import log_llm_usage
 
 client = AsyncOpenAI(api_key=OPENAI_API_KEY)
 MODEL = "gpt-4o-mini"
@@ -66,7 +67,7 @@ def _product_for(product_id: str) -> dict:
     raise ValueError(f"Unknown product_id: {product_id}")
 
 
-def _prompt(channel: str, lead: dict, ctx: dict, product: dict) -> str:
+def _prompt(channel: str, lead: dict, ctx: dict, product: dict, company_name: str) -> str:
     angle = product["seniority_angles"].get(lead["seniority"], product["seniority_angles"]["director"])
     constraints = {
         "email": "Subject line <=60 characters. Body: 3-5 short sentences, professional but not stiff.",
@@ -75,12 +76,26 @@ def _prompt(channel: str, lead: dict, ctx: dict, product: dict) -> str:
     }[channel]
 
     return f"""Write a {channel} outreach message to {lead['first_name']} {lead['last_name']},
-{lead['title']} at {ctx['entity']}.
+{lead['title']} at {company_name}.
 
-News catalyst: {ctx['catalyst']}
-Relevant pain points: {', '.join(ctx['pain_points'])}
+IMPORTANT — {company_name} is almost certainly NOT the company in the news item
+below, and there is no reason to think {lead['first_name']} has seen it. Do NOT
+say or imply "{company_name}" was mentioned in the news, was affected by it, or
+already knows about it. Instead, use the news only as your own soft segue —
+something like "we've been watching X trend in the industry" or "with Y shift
+happening across the space" — then pivot into how that trend plausibly creates
+the pain points below for a company like {company_name}.
+
+Industry trend prompting this outreach: {ctx['catalyst']}
+Pain points that trend plausibly creates for companies like this: {', '.join(ctx['pain_points'])}
 Our product: {product['name']} — {product['description']}
 Angle for this person's seniority ({lead['seniority']}): {angle}
+
+Personalization: Lightly work in {company_name} and something that reads as
+aware of {lead['title']}'s role/priorities, so the message feels tailored to
+them specifically. Keep it subtle — don't explicitly call out that you looked
+up their company or title (no "I noticed you're the X at Y"); just let it show
+naturally in the framing and word choice.
 
 Constraints: {constraints}
 
@@ -89,19 +104,23 @@ Return ONLY valid JSON, no markdown fences:
 """
 
 
-async def _generate_one(channel: str, lead: dict, ctx: dict, product: dict) -> ChannelCopy:
+async def _generate_one(channel: str, lead: dict, ctx: dict, product: dict, company_name: str,
+                         campaign_id: int | None = None) -> ChannelCopy:
     last_error = None
     for _ in range(MAX_GENERATION_RETRIES + 1):
         resp = await client.chat.completions.create(
             model=MODEL,
             temperature=0.7,
-            messages=[{"role": "user", "content": _prompt(channel, lead, ctx, product)}],
+            messages=[{"role": "user", "content": _prompt(channel, lead, ctx, product, company_name)}],
             response_format={"type": "json_object"},
         )
         data = json.loads(resp.choices[0].message.content)
         copy = ChannelCopy(**data)
         try:
             _enforce_channel_constraints(channel, copy)
+            if campaign_id is not None:
+                log_llm_usage(campaign_id, MODEL, "copy_generation",
+                             resp.usage.prompt_tokens, resp.usage.completion_tokens)
             return copy
         except ValueError as e:
             last_error = e
@@ -109,12 +128,12 @@ async def _generate_one(channel: str, lead: dict, ctx: dict, product: dict) -> C
     raise last_error
 
 
-async def generate_copy_for_lead(lead: dict, ctx: dict, campaign_id: int) -> dict:
+async def generate_copy_for_lead(lead: dict, ctx: dict, company_name: str, campaign_id: int) -> dict:
     """Returns dict of channel -> {subject_line, body_text, tracking_url} or
     channel -> {"error": ...} for channels that failed. Never raises."""
     product = _product_for(ctx["product_id"])
     results = await asyncio.gather(
-        *[_generate_one(ch, lead, ctx, product) for ch in CHANNELS],
+        *[_generate_one(ch, lead, ctx, product, company_name, campaign_id) for ch in CHANNELS],
         return_exceptions=True,
     )
 
@@ -131,12 +150,12 @@ async def generate_copy_for_lead(lead: dict, ctx: dict, campaign_id: int) -> dic
     return out
 
 
-async def generate_all_copy(leads: list[dict], ctx: dict, campaign_id: int) -> list[dict]:
+async def generate_all_copy(leads: list[dict], ctx: dict, company_name: str, campaign_id: int) -> list[dict]:
     """Generates copy for all leads in parallel. A single lead's total failure
     (all channels erroring) still returns an entry with per-channel errors —
     it never removes the lead or crashes the batch."""
     per_lead_results = await asyncio.gather(
-        *[generate_copy_for_lead(lead, ctx, campaign_id) for lead in leads],
+        *[generate_copy_for_lead(lead, ctx, company_name, campaign_id) for lead in leads],
         return_exceptions=True,
     )
 

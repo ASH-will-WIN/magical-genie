@@ -118,7 +118,7 @@ async def run_campaign(req: CampaignRequest):
     #    later in copy-gen; theme extraction/scoring is independent of it)
     log("main", f"campaign {campaign_id}: starting context extraction + theme/ICP scoring in parallel")
     ctx_result, scoring_result = await asyncio.gather(
-        extract_context(text), build_and_score_candidates(campaign_id, text),
+        extract_context(text, campaign_id), build_and_score_candidates(campaign_id, text),
         return_exceptions=True,
     )
 
@@ -132,7 +132,7 @@ async def run_campaign(req: CampaignRequest):
 
     if isinstance(scoring_result, Exception):
         log("main", f"campaign {campaign_id}: theme/ICP scoring raised unexpectedly: {scoring_result}")
-        scoring_result = {"theme": None, "candidates": []}
+        scoring_result = {"theme": None, "candidates": [], "search_stats": None}
 
     with get_conn() as conn:
         conn.execute(
@@ -146,6 +146,7 @@ async def run_campaign(req: CampaignRequest):
     ctx_dict = ctx.model_dump()
     theme = scoring_result["theme"]
     candidates = scoring_result["candidates"]
+    search_stats = scoring_result.get("search_stats")
 
     if theme is None:
         # Soft-fail: theme extraction failed, so no ICP candidates could be
@@ -154,7 +155,7 @@ async def run_campaign(req: CampaignRequest):
         set_status("awaiting_review")
         return {
             "campaign_id": campaign_id, "status": "no_candidates", "context": ctx_dict,
-            "theme": None, "candidates": [], "leads": [],
+            "theme": None, "candidates": [], "leads": [], "search_stats": None, "company_summaries": [],
         }
 
     approved = [c for c in candidates if c["bucket"] == "approved"]
@@ -165,11 +166,14 @@ async def run_campaign(req: CampaignRequest):
         set_status("awaiting_review")
         return {
             "campaign_id": campaign_id, "status": "awaiting_review", "context": ctx_dict,
-            "theme": theme, "candidates": candidates, "leads": [],
+            "theme": theme, "candidates": candidates, "leads": [], "search_stats": search_stats,
+            "company_summaries": [],
         }
 
     # 3. Lead search + copy generation for approved companies only
-    results = await fetch_leads_for_approved(campaign_id, candidates, ctx)
+    lead_fetch_result = await fetch_leads_for_approved(campaign_id, candidates, ctx)
+    results = lead_fetch_result["leads"]
+    company_summaries = lead_fetch_result["company_summaries"]
     set_status("leads_found")
     set_status("generated")
     log("main", f"campaign {campaign_id}: done -> {len(results)} leads with copy generated")
@@ -181,6 +185,8 @@ async def run_campaign(req: CampaignRequest):
         "theme": theme,
         "candidates": candidates,
         "leads": results,
+        "search_stats": search_stats,
+        "company_summaries": company_summaries,
     }
 
 

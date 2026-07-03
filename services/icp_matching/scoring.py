@@ -16,7 +16,7 @@ from config import OPENAI_API_KEY
 from services.usage_tracker import log_llm_usage
 
 client = AsyncOpenAI(api_key=OPENAI_API_KEY)
-MODEL = "gpt-4o"
+MODEL = "gpt-4o-mini"
 MAX_RETRIES = 3
 
 # Below this length, a description carries no real signal (empty scrape,

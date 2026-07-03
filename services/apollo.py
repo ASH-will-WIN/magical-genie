@@ -53,7 +53,7 @@ def _guess_domain(company_name: str) -> str:
 
 
 async def resolve_domain(company_name: str) -> str | None:
-    async with httpx.AsyncClient(timeout=15) as client:
+    async with httpx.AsyncClient(timeout=20.0) as client:
         try:
             resp = await client.post(
                 f"{APOLLO_BASE}/organizations/search",
@@ -72,6 +72,8 @@ async def resolve_domain(company_name: str) -> str | None:
             orgs = data.get("organizations") or []
             if orgs and orgs[0].get("primary_domain"):
                 return orgs[0]["primary_domain"]
+        except httpx.TimeoutException as e:
+            log("apollo-resolve", f"domain resolution timeout for {company_name}: {e}")
         except httpx.HTTPError:
             pass
 
@@ -91,7 +93,7 @@ async def search_organizations(keywords: list[str], employee_min: int, employee_
         "page": 1,
         "per_page": per_page,
     }
-    async with httpx.AsyncClient(timeout=20) as client:
+    async with httpx.AsyncClient(timeout=20.0) as client:
         try:
             resp = await client.post(f"{APOLLO_BASE}/organizations/search", headers=_headers(), json=payload)
             if resp.status_code == 429:
@@ -99,6 +101,9 @@ async def search_organizations(keywords: list[str], employee_min: int, employee_
                 resp = await client.post(f"{APOLLO_BASE}/organizations/search", headers=_headers(), json=payload)
             resp.raise_for_status()
             orgs = resp.json().get("organizations") or []
+        except httpx.TimeoutException as e:
+            log("apollo-search", f"org search timeout for keywords={keywords}: {e}")
+            return []
         except httpx.HTTPError as e:
             log("apollo-search", f"org search failed for keywords={keywords}: {e}")
             return []
@@ -134,11 +139,15 @@ async def _search_people(client: httpx.AsyncClient, domain: str, target_titles: 
     if location:
         payload["person_locations"] = [location]
 
-    resp = await client.post(f"{APOLLO_BASE}/mixed_people/api_search", headers=_headers(), json=payload)
-    if resp.status_code == 429:
-        await asyncio.sleep(2)
+    try:
         resp = await client.post(f"{APOLLO_BASE}/mixed_people/api_search", headers=_headers(), json=payload)
-    return resp
+        if resp.status_code == 429:
+            await asyncio.sleep(2)
+            resp = await client.post(f"{APOLLO_BASE}/mixed_people/api_search", headers=_headers(), json=payload)
+        return resp
+    except httpx.TimeoutException:
+        # Re-raise to be handled by caller
+        raise
 
 
 async def _reveal_person(client: httpx.AsyncClient, person_id: str) -> dict | None:
@@ -148,13 +157,16 @@ async def _reveal_person(client: httpx.AsyncClient, person_id: str) -> dict | No
     is never requested -- do not add phone reveal without an explicit ask,
     per CLAUDE.md's credit-budget rule. Returns None on failure/no-match."""
     payload = {"id": person_id, "reveal_personal_emails": False}
-    resp = await client.post(f"{APOLLO_BASE}/people/match", headers=_headers(), json=payload)
-    if resp.status_code == 429:
-        await asyncio.sleep(2)
+    try:
         resp = await client.post(f"{APOLLO_BASE}/people/match", headers=_headers(), json=payload)
-    if resp.status_code >= 400:
+        if resp.status_code == 429:
+            await asyncio.sleep(2)
+            resp = await client.post(f"{APOLLO_BASE}/people/match", headers=_headers(), json=payload)
+        if resp.status_code >= 400:
+            return None
+        return resp.json().get("person")
+    except httpx.TimeoutException:
         return None
-    return resp.json().get("person")
 
 
 def _lead_from_matched_person(p: dict) -> dict:
@@ -181,27 +193,31 @@ async def _try_tier(client: httpx.AsyncClient, domain: str, titles: list[str], l
     later. Returns [] on any failure/no-match (soft-fail, caller tries the
     next tier)."""
     log("apollo-leads", f"{domain}: [{tier_label}] searching location={location!r} titles={titles}")
-    resp = await _search_people(client, domain, titles, location, max_results)
-    if resp.status_code >= 400:
-        log("apollo-leads", f"{domain}: [{tier_label}] location={location!r} failed with status {resp.status_code}")
-        return []
-    people = resp.json().get("people", [])
-    log("apollo-leads", f"{domain}: [{tier_label}] location={location!r} -> {len(people)} preview results")
-    if not people:
-        return []
+    try:
+        resp = await _search_people(client, domain, titles, location, max_results)
+        if resp.status_code >= 400:
+            log("apollo-leads", f"{domain}: [{tier_label}] location={location!r} failed with status {resp.status_code}")
+            return []
+        people = resp.json().get("people", [])
+        log("apollo-leads", f"{domain}: [{tier_label}] location={location!r} -> {len(people)} preview results")
+        if not people:
+            return []
 
-    candidates = [p for p in people if p.get("id") and p.get("has_email")]
-    log("apollo-leads", f"{domain}: [{tier_label}] revealing {len(candidates)}/{len(people)} candidates with has_email=true (costs credits)")
-    if not candidates:
+        candidates = [p for p in people if p.get("id") and p.get("has_email")]
+        log("apollo-leads", f"{domain}: [{tier_label}] revealing {len(candidates)}/{len(people)} candidates with has_email=true (costs credits)")
+        if not candidates:
+            return []
+        revealed = await asyncio.gather(*[_reveal_person(client, p["id"]) for p in candidates])
+        matched = [m for m in revealed if m and m.get("email")]
+        log("apollo-leads", f"{domain}: [{tier_label}] reveal complete -> {len(matched)} usable leads with email")
+
+        if campaign_id is not None and matched:
+            log_apollo_usage(campaign_id, "enrichment", emails=len(matched))
+
+        return [_lead_from_matched_person(m) for m in matched]
+    except httpx.TimeoutException as e:
+        log("apollo-leads", f"{domain}: [{tier_label}] timeout during search/reveal: {e}")
         return []
-    revealed = await asyncio.gather(*[_reveal_person(client, p["id"]) for p in candidates])
-    matched = [m for m in revealed if m and m.get("email")]
-    log("apollo-leads", f"{domain}: [{tier_label}] reveal complete -> {len(matched)} usable leads with email")
-
-    if campaign_id is not None and matched:
-        log_apollo_usage(campaign_id, "enrichment", emails=len(matched))
-
-    return [_lead_from_matched_person(m) for m in matched]
 
 
 async def find_leads(domain: str, target_titles: list[str], city: str | None = None,
@@ -220,11 +236,19 @@ async def find_leads(domain: str, target_titles: list[str], city: str | None = N
     to usage_log via usage_tracker (best-effort, never raises)."""
     tiers = [loc for loc in (city, state) if loc] + [None]
 
-    async with httpx.AsyncClient(timeout=20) as client:
+    async with httpx.AsyncClient(timeout=20.0) as client:
         for location in tiers:
-            leads = await _try_tier(client, domain, target_titles, location, max_results, campaign_id, "product_titles")
-            if leads:
-                return leads
+            try:
+                leads = await _try_tier(client, domain, target_titles, location, max_results, campaign_id, "product_titles")
+                if leads:
+                    return leads
+            except httpx.TimeoutException:
+                log("apollo-leads", f"{domain}: timeout during product_titles search for location={location}")
+                continue
 
         log("apollo-leads", f"{domain}: product-specific titles exhausted with 0 leads across all tiers, trying founder_fallback")
-        return await _try_tier(client, domain, FOUNDER_FALLBACK_TITLES, None, max_results, campaign_id, "founder_fallback")
+        try:
+            return await _try_tier(client, domain, FOUNDER_FALLBACK_TITLES, None, max_results, campaign_id, "founder_fallback")
+        except httpx.TimeoutException:
+            log("apollo-leads", f"{domain}: timeout during founder_fallback search")
+            return []

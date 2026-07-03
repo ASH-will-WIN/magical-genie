@@ -42,6 +42,9 @@ APOLLO_CREDIT_COSTS = {
     "phone": 8,
 }
 
+# Apollo credit cost in USD (derived from plan: $99/mo for 4,800 credits ≈ $0.0206/credit)
+APOLLO_CREDIT_COST_USD = 0.0206
+
 URGENCY_RUBRIC = """
 9-10 = deadline within 3 months
 7-8  = deadline within 6 months

@@ -131,13 +131,18 @@ def _target_titles_for(product_id: str | None) -> list[str]:
     return product["target_titles"] if product else []
 
 
-async def fetch_leads_and_copy_for_company(campaign_id: int, domain: str, target_titles: list[str],
-                                            ctx_dict: dict, city: str | None, state: str | None) -> list[dict]:
+async def fetch_leads_and_copy_for_company(campaign_id: int, domain: str, company_name: str,
+                                            target_titles: list[str], ctx_dict: dict,
+                                            city: str | None, state: str | None) -> list[dict]:
     """Per-company lead-fetch + copy-gen + persist, reused for every
     'approved' candidate in the batch pipeline and for a single candidate
     when a human approves it from the needs_review queue. Same soft-fail
     per-row/per-channel behavior as the original single-company flow in
-    main.py."""
+    main.py. company_name is the ICP candidate's own company (NOT
+    ctx_dict['entity'], which is the company named in the source article --
+    Venn Diagram leads work at an unrelated company that has no reason to
+    know about that article; copy_gen uses company_name for personalization
+    and treats the article catalyst only as a soft segue into the pitch."""
     log("leads", f"campaign {campaign_id}: lead-fetch starting for {domain} (titles={target_titles}, city={city}, state={state})")
     raw_leads = await find_leads(domain, target_titles, city=city, state=state, campaign_id=campaign_id)
     log("leads", f"campaign {campaign_id}: {domain} -> {len(raw_leads)} leads found")
@@ -150,12 +155,16 @@ async def fetch_leads_and_copy_for_company(campaign_id: int, domain: str, target
             try:
                 cur = conn.execute(
                     """INSERT OR IGNORE INTO leads
-                       (campaign_id, apollo_id, first_name, last_name, title, seniority, email, phone, linkedin)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                       (campaign_id, apollo_id, first_name, last_name, title, seniority, email, phone, linkedin,
+                        company_name, domain)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                     (campaign_id, lead["apollo_id"], lead["first_name"], lead["last_name"],
-                     lead["title"], lead["seniority"], lead["email"], lead["phone"], lead["linkedin"]),
+                     lead["title"], lead["seniority"], lead["email"], lead["phone"], lead["linkedin"],
+                     company_name, domain),
                 )
                 lead["db_id"] = cur.lastrowid
+                lead["company_name"] = company_name
+                lead["domain"] = domain
                 saved_leads.append(lead)
             except Exception:
                 continue
@@ -164,7 +173,7 @@ async def fetch_leads_and_copy_for_company(campaign_id: int, domain: str, target
         return []
 
     log("copy", f"campaign {campaign_id}: {domain} -> copy-gen starting for {len(saved_leads)} lead(s)")
-    results = await generate_all_copy(saved_leads, ctx_dict, campaign_id)
+    results = await generate_all_copy(saved_leads, ctx_dict, company_name, campaign_id)
 
     with get_conn() as conn:
         for r in results:
@@ -202,7 +211,7 @@ async def build_and_score_candidates(campaign_id: int, article_text: str) -> dic
         theme = await extract_theme(article_text, campaign_id=campaign_id)
     except ValueError as e:
         log("theme", f"campaign {campaign_id}: theme extraction FAILED: {e}")
-        return {"theme": None, "candidates": []}
+        return {"theme": None, "candidates": [], "search_stats": None}
     log("theme", f"campaign {campaign_id}: theme extracted -> keywords={theme.apollo_keyword_candidates}")
 
     with get_conn() as conn:
@@ -227,7 +236,9 @@ async def build_and_score_candidates(campaign_id: int, article_text: str) -> dic
     cluster_results = await asyncio.gather(
         *[search_organizations(kw, emp_min, emp_max) for kw in clusters]
     )
+    cluster_counts = {}
     for label, orgs in zip(CLUSTER_LABELS, cluster_results):
+        cluster_counts[label] = len(orgs)
         log("apollo-search", f"campaign {campaign_id}: cluster '{label}' -> {len(orgs)} orgs")
 
     merged: dict[str, dict] = {}
@@ -300,10 +311,16 @@ async def build_and_score_candidates(campaign_id: int, article_text: str) -> dic
     n_rejected = sum(1 for r in candidate_rows if r["bucket"] in ("rejected", "dropped_at_prefilter"))
     log("bucket", f"campaign {campaign_id}: persisted {len(candidate_rows)} candidates -> approved={n_approved} needs_review={n_review} rejected={n_rejected}")
 
-    return {"theme": theme.model_dump(), "candidates": candidate_rows}
+    search_stats = {
+        "cluster_counts": cluster_counts,  # {"article-only": N, "icp-only": N, "blended": N} -- raw, pre-dedupe
+        "unique_candidates_found": len(all_candidates),
+        "prefilter_kept": len(kept),
+        "prefilter_dropped": len(dropped),
+    }
+    return {"theme": theme.model_dump(), "candidates": candidate_rows, "search_stats": search_stats}
 
 
-async def fetch_leads_for_approved(campaign_id: int, candidates: list[dict], ctx) -> list[dict]:
+async def fetch_leads_for_approved(campaign_id: int, candidates: list[dict], ctx) -> dict:
     """Runs fetch_leads_and_copy_for_company() for every 'approved' candidate
     row (as returned by build_and_score_candidates), once per company, and
     marks each as 'leads_fetched'. `ctx` is the CampaignContext produced by
@@ -314,29 +331,69 @@ async def fetch_leads_for_approved(campaign_id: int, candidates: list[dict], ctx
     unrelated candidate company from the Venn search is actually
     headquartered. Location filtering isn't applied here at all; it would
     need to come from each candidate's own Apollo-provided address, not the
-    article's."""
+    article's.
+
+    Returns {"leads": [...], "company_summaries": [...]} -- one summary row
+    per approved company (status: fetched | zero_leads | skipped_cap) so the
+    caller can show exactly what happened to every company, not just the
+    ones that produced leads."""
     target_titles = _target_titles_for(ctx.product_id)
     ctx_dict = ctx.model_dump()
     approved = [c for c in candidates if c["bucket"] == "approved"]
     log("leads", f"campaign {campaign_id}: fetching leads for {len(approved)} approved companies")
 
     approved_results = []
+    company_summaries = []
+
+    # Process companies with a timeout to prevent one slow company from blocking everything
     for i, row in enumerate(approved, start=1):
         cap_reason = _lead_fetch_cap_reason(campaign_id)
         if cap_reason:
             log("lead-fetch", f"campaign {campaign_id}: stopping - {cap_reason} - {len(approved) - i + 1} remaining approved companies left unfetched")
+            for remaining in approved[i - 1:]:
+                company_summaries.append({
+                    "company_name": remaining["company_name"], "domain": remaining["domain"],
+                    "leads_found": 0, "status": "skipped_cap", "reason": cap_reason,
+                })
             break
 
         log("leads", f"campaign {campaign_id}: [{i}/{len(approved)}] {row['company_name']} ({row['domain']})")
-        results = await fetch_leads_and_copy_for_company(
-            campaign_id, row["domain"], target_titles, ctx_dict, city=None, state=None
-        )
-        approved_results.extend(results)
-        with get_conn() as conn:
-            conn.execute("UPDATE icp_candidates SET status = 'leads_fetched' WHERE id = ?", (row["id"],))
+        try:
+            # Add a timeout for each company's processing to prevent hanging
+            results = await asyncio.wait_for(
+                fetch_leads_and_copy_for_company(
+                    campaign_id, row["domain"], row["company_name"], target_titles, ctx_dict, city=None, state=None
+                ),
+                timeout=60.0  # 60 seconds timeout per company
+            )
+            approved_results.extend(results)
+            company_summaries.append({
+                "company_name": row["company_name"], "domain": row["domain"],
+                "leads_found": len(results), "status": "fetched" if results else "zero_leads", "reason": None,
+            })
+            with get_conn() as conn:
+                conn.execute("UPDATE icp_candidates SET status = 'leads_fetched' WHERE id = ?", (row["id"],))
+        except asyncio.TimeoutError:
+            log("leads", f"campaign {campaign_id}: timeout processing company {row['company_name']} ({row['domain']}) - skipping")
+            company_summaries.append({
+                "company_name": row["company_name"], "domain": row["domain"],
+                "leads_found": 0, "status": "timeout", "reason": "Processing timeout",
+            })
+            # Still mark as leads_fetched so we don't retry it
+            with get_conn() as conn:
+                conn.execute("UPDATE icp_candidates SET status = 'leads_fetched' WHERE id = ?", (row["id"],))
+        except Exception as e:
+            log("leads", f"campaign {campaign_id}: error processing company {row['company_name']} ({row['domain']}): {e}")
+            company_summaries.append({
+                "company_name": row["company_name"], "domain": row["domain"],
+                "leads_found": 0, "status": "error", "reason": str(e),
+            })
+            # Still mark as leads_fetched so we don't retry it
+            with get_conn() as conn:
+                conn.execute("UPDATE icp_candidates SET status = 'leads_fetched' WHERE id = ?", (row["id"],))
 
     log("leads", f"campaign {campaign_id}: lead-fetch pass finished -> {len(approved_results)} total leads")
-    return approved_results
+    return {"leads": approved_results, "company_summaries": company_summaries}
 
 
 async def approve_candidate(campaign_id: int, candidate_id: int) -> dict | None:
@@ -366,12 +423,22 @@ async def approve_candidate(campaign_id: int, candidate_id: int) -> dict | None:
         return {
             "candidate_id": candidate_id, "results": [],
             "message": f"Lead fetch skipped — testing cap reached for this campaign ({cap_reason})",
+            "company_summary": {
+                "company_name": candidate["company_name"], "domain": candidate["domain"],
+                "leads_found": 0, "status": "skipped_cap", "reason": cap_reason,
+            },
         }
 
     if not ctx_row:
         log("review", f"campaign {campaign_id}: no context row found, cannot fetch leads for candidate {candidate_id}")
         _maybe_advance_campaign_status(campaign_id)
-        return {"candidate_id": candidate_id, "results": [], "error": "no context found for this campaign"}
+        return {
+            "candidate_id": candidate_id, "results": [], "error": "no context found for this campaign",
+            "company_summary": {
+                "company_name": candidate["company_name"], "domain": candidate["domain"],
+                "leads_found": 0, "status": "error", "reason": "no context found for this campaign",
+            },
+        }
 
     ctx_dict = {
         "entity": ctx_row["entity"], "catalyst": ctx_row["catalyst"],
@@ -384,15 +451,47 @@ async def approve_candidate(campaign_id: int, candidate_id: int) -> dict | None:
     # city/state (existing schema, unchanged per Deliverable 1) -- the
     # manual-approve path degrades to a domain-wide lead search, no
     # city/state tiered narrowing.
-    results = await fetch_leads_and_copy_for_company(
-        campaign_id, candidate["domain"], target_titles, ctx_dict, city=None, state=None
-    )
+    try:
+        results = await asyncio.wait_for(
+            fetch_leads_and_copy_for_company(
+                campaign_id, candidate["domain"], candidate["company_name"], target_titles, ctx_dict, city=None, state=None
+            ),
+            timeout=60.0  # 60 seconds timeout for manual approval too
+        )
+    except asyncio.TimeoutError:
+        log("review", f"campaign {campaign_id}: timeout approving candidate {candidate_id}")
+        _maybe_advance_campaign_status(campaign_id)
+        return {
+            "candidate_id": candidate_id, "results": [],
+            "message": f"Lead fetch timed out for candidate {candidate['company_name']}",
+            "company_summary": {
+                "company_name": candidate["company_name"], "domain": candidate["domain"],
+                "leads_found": 0, "status": "timeout", "reason": "Processing timeout",
+            },
+        }
+    except Exception as e:
+        log("review", f"campaign {campaign_id}: error approving candidate {candidate_id}: {e}")
+        _maybe_advance_campaign_status(campaign_id)
+        return {
+            "candidate_id": candidate_id, "results": [], "error": str(e),
+            "company_summary": {
+                "company_name": candidate["company_name"], "domain": candidate["domain"],
+                "leads_found": 0, "status": "error", "reason": str(e),
+            },
+        }
+
     with get_conn() as conn:
         conn.execute("UPDATE icp_candidates SET status = 'leads_fetched' WHERE id = ?", (candidate_id,))
 
     log("review", f"campaign {campaign_id}: candidate {candidate_id} approve complete -> {len(results)} leads")
     _maybe_advance_campaign_status(campaign_id)
-    return {"candidate_id": candidate_id, "results": results}
+    return {
+        "candidate_id": candidate_id, "results": results,
+        "company_summary": {
+            "company_name": candidate["company_name"], "domain": candidate["domain"],
+            "leads_found": len(results), "status": "fetched" if results else "zero_leads", "reason": None,
+        },
+    }
 
 
 async def reject_candidate(campaign_id: int, candidate_id: int) -> dict | None:

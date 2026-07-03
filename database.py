@@ -41,6 +41,8 @@ CREATE TABLE IF NOT EXISTS leads (
     email TEXT,
     phone TEXT,
     linkedin TEXT,
+    company_name TEXT,    -- the ICP candidate company this lead was found at
+    domain TEXT,
     UNIQUE(campaign_id, apollo_id)
 );
 
@@ -122,9 +124,22 @@ def get_conn():
         conn.close()
 
 
+def _migrate(conn: sqlite3.Connection):
+    """Additive, idempotent column migrations for DBs created before a schema
+    change -- CREATE TABLE IF NOT EXISTS is a no-op on an existing table, so
+    new columns need to be added explicitly for anyone with a pre-existing
+    campaigns.db."""
+    existing_cols = {row["name"] for row in conn.execute("PRAGMA table_info(leads)")}
+    if "company_name" not in existing_cols:
+        conn.execute("ALTER TABLE leads ADD COLUMN company_name TEXT")
+    if "domain" not in existing_cols:
+        conn.execute("ALTER TABLE leads ADD COLUMN domain TEXT")
+
+
 def init_db():
     with get_conn() as conn:
         conn.executescript(SCHEMA)
+        _migrate(conn)
 
 
 def now_iso() -> str:

@@ -9,6 +9,7 @@ from openai import AsyncOpenAI
 from pydantic import BaseModel, Field, computed_field, field_validator
 
 from config import OPENAI_API_KEY, URGENCY_RUBRIC, product_ids
+from services.usage_tracker import log_llm_usage
 
 client = AsyncOpenAI(api_key=OPENAI_API_KEY)
 
@@ -71,7 +72,7 @@ Article:
 """
 
 
-async def extract_context(article_text: str) -> CampaignContext:
+async def extract_context(article_text: str, campaign_id: int | None = None) -> CampaignContext:
     last_error = None
     for attempt in range(MAX_RETRIES):
         resp = await client.chat.completions.create(
@@ -83,8 +84,12 @@ async def extract_context(article_text: str) -> CampaignContext:
         raw = resp.choices[0].message.content
         try:
             data = json.loads(raw)
-            return CampaignContext(**data)
+            result = CampaignContext(**data)
         except Exception as e:
             last_error = e
             continue
+        if campaign_id is not None:
+            log_llm_usage(campaign_id, MODEL, "context_extraction",
+                         resp.usage.prompt_tokens, resp.usage.completion_tokens)
+        return result
     raise ValueError(f"Context extraction failed after {MAX_RETRIES} attempts: {last_error}")

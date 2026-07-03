@@ -28,10 +28,12 @@ class ScrapeResult:
 
 async def scrape_article(url: str) -> ScrapeResult:
     try:
-        async with httpx.AsyncClient(timeout=15, headers={"User-Agent": USER_AGENT}, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=20.0, headers={"User-Agent": USER_AGENT}, follow_redirects=True) as client:
             resp = await client.get(url)
             resp.raise_for_status()
             html = resp.text
+    except httpx.TimeoutException as e:
+        return ScrapeResult(text=None, is_paywalled=False, error=f"fetch_timeout: {e}")
     except httpx.HTTPError as e:
         return ScrapeResult(text=None, is_paywalled=False, error=f"fetch_failed: {e}")
 
