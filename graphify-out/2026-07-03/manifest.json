@@ -160,8 +160,8 @@
     "semantic_hash": ""
   },
   ".superpowers/sdd/progress.md": {
-    "mtime": 1783118365.9306066,
-    "ast_hash": "75d22a83c503401fdcca6c2d96fb79c2",
+    "mtime": 1783117074.3345213,
+    "ast_hash": "75d96baeb64bf579b920e6a1e252b78b",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-03-ui-overhaul.md": {
@@ -200,18 +200,8 @@
     "semantic_hash": ""
   },
   "styles.py": {
-    "mtime": 1783118294.4692965,
-    "ast_hash": "2e6e79a5cbf522c1e2539204a70884ca",
-    "semantic_hash": ""
-  },
-  "api_client.py": {
-    "mtime": 1783118906.8989415,
-    "ast_hash": "90cf2853173feaa3f95063490f70968d",
-    "semantic_hash": ""
-  },
-  "tests/test_api_client.py": {
-    "mtime": 1783118872.1479163,
-    "ast_hash": "7429333c4440579e0418ee75a862e372",
+    "mtime": 1783118252.6397362,
+    "ast_hash": "7f5d9c8257ebb13e173180f156d22beb",
     "semantic_hash": ""
   }
 }

@@ -53,86 +53,6 @@
   },
   "nodes": [
     {
-      "label": "api_client.py",
-      "file_type": "code",
-      "source_file": "api_client.py",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "api_client",
-      "community": 3,
-      "norm_label": "api_client.py"
-    },
-    {
-      "label": "run_campaign()",
-      "file_type": "code",
-      "source_file": "api_client.py",
-      "source_location": "L11",
-      "_origin": "ast",
-      "id": "api_client_run_campaign",
-      "community": 3,
-      "norm_label": "run_campaign()"
-    },
-    {
-      "label": "get_campaign()",
-      "file_type": "code",
-      "source_file": "api_client.py",
-      "source_location": "L24",
-      "_origin": "ast",
-      "id": "api_client_get_campaign",
-      "community": 3,
-      "norm_label": "get_campaign()"
-    },
-    {
-      "label": "list_campaigns()",
-      "file_type": "code",
-      "source_file": "api_client.py",
-      "source_location": "L33",
-      "_origin": "ast",
-      "id": "api_client_list_campaigns",
-      "community": 3,
-      "norm_label": "list_campaigns()"
-    },
-    {
-      "label": "approve_candidate()",
-      "file_type": "code",
-      "source_file": "api_client.py",
-      "source_location": "L43",
-      "_origin": "ast",
-      "id": "api_client_approve_candidate",
-      "community": 3,
-      "norm_label": "approve_candidate()"
-    },
-    {
-      "label": "reject_candidate()",
-      "file_type": "code",
-      "source_file": "api_client.py",
-      "source_location": "L54",
-      "_origin": "ast",
-      "id": "api_client_reject_candidate",
-      "community": 3,
-      "norm_label": "reject_candidate()"
-    },
-    {
-      "label": "health_keys()",
-      "file_type": "code",
-      "source_file": "api_client.py",
-      "source_location": "L65",
-      "_origin": "ast",
-      "id": "api_client_health_keys",
-      "community": 3,
-      "norm_label": "health_keys()"
-    },
-    {
-      "label": "Thin wrapper over every HTTP call the Streamlit UI makes to the FastAPI backend.",
-      "file_type": "rationale",
-      "source_file": "api_client.py",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "api_client_rationale_1",
-      "community": 3,
-      "norm_label": "thin wrapper over every http call the streamlit ui makes to the fastapi backend."
-    },
-    {
       "label": "campaign_test.py",
       "file_type": "code",
       "source_file": "campaign_test.py",
@@ -339,7 +259,7 @@
       "source_location": "L95",
       "_origin": "ast",
       "id": "config_load_product_catalog",
-      "community": 0,
+      "community": 1,
       "norm_label": "load_product_catalog()"
     },
     {
@@ -389,7 +309,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "database",
-      "community": 4,
+      "community": 13,
       "norm_label": "database.py"
     },
     {
@@ -399,7 +319,7 @@
       "source_location": "L113",
       "_origin": "ast",
       "id": "database_get_conn",
-      "community": 4,
+      "community": 13,
       "norm_label": "get_conn()"
     },
     {
@@ -409,7 +329,7 @@
       "source_location": "L127",
       "_origin": "ast",
       "id": "database_migrate",
-      "community": 4,
+      "community": 13,
       "norm_label": "_migrate()"
     },
     {
@@ -419,7 +339,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "connection",
-      "community": 4,
+      "community": 13,
       "norm_label": "connection"
     },
     {
@@ -429,7 +349,7 @@
       "source_location": "L139",
       "_origin": "ast",
       "id": "database_init_db",
-      "community": 4,
+      "community": 13,
       "norm_label": "init_db()"
     },
     {
@@ -439,7 +359,7 @@
       "source_location": "L145",
       "_origin": "ast",
       "id": "database_now_iso",
-      "community": 4,
+      "community": 13,
       "norm_label": "now_iso()"
     },
     {
@@ -449,7 +369,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "database_rationale_1",
-      "community": 4,
+      "community": 13,
       "norm_label": "sqlite schema + connection management. zero-devops choice for mvp. migrate to p"
     },
     {
@@ -459,7 +379,7 @@
       "source_location": "L128",
       "_origin": "ast",
       "id": "database_rationale_128",
-      "community": 4,
+      "community": 13,
       "norm_label": "additive, idempotent column migrations for dbs created before a schema     chan"
     },
     {
@@ -509,7 +429,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "basemodel",
-      "community": 13,
+      "community": 1,
       "norm_label": "basemodel"
     },
     {
@@ -569,7 +489,7 @@
       "source_location": "L88",
       "_origin": "ast",
       "id": "main_run_campaign",
-      "community": 0,
+      "community": 13,
       "norm_label": "run_campaign()"
     },
     {
@@ -579,7 +499,7 @@
       "source_location": "L204",
       "_origin": "ast",
       "id": "main_log_click",
-      "community": 4,
+      "community": 13,
       "norm_label": "log_click()"
     },
     {
@@ -609,7 +529,7 @@
       "source_location": "L245",
       "_origin": "ast",
       "id": "main_approve_candidate_endpoint",
-      "community": 0,
+      "community": 13,
       "norm_label": "approve_candidate_endpoint()"
     },
     {
@@ -1059,7 +979,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_icp_matching_pipeline",
-      "community": 0,
+      "community": 2,
       "norm_label": "pipeline.py"
     },
     {
@@ -1069,7 +989,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "services_icp_matching_pipeline_campaign_lead_fetch_counts",
-      "community": 0,
+      "community": 3,
       "norm_label": "_campaign_lead_fetch_counts()"
     },
     {
@@ -1079,7 +999,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "services_icp_matching_pipeline_lead_fetch_cap_reason",
-      "community": 0,
+      "community": 3,
       "norm_label": "_lead_fetch_cap_reason()"
     },
     {
@@ -1089,7 +1009,7 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "services_icp_matching_pipeline_has_unresolved_needs_review",
-      "community": 0,
+      "community": 13,
       "norm_label": "_has_unresolved_needs_review()"
     },
     {
@@ -1099,7 +1019,7 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "services_icp_matching_pipeline_maybe_advance_campaign_status",
-      "community": 0,
+      "community": 13,
       "norm_label": "_maybe_advance_campaign_status()"
     },
     {
@@ -1109,7 +1029,7 @@
       "source_location": "L94",
       "_origin": "ast",
       "id": "services_icp_matching_pipeline_bucket",
-      "community": 0,
+      "community": 3,
       "norm_label": "_bucket()"
     },
     {
@@ -1119,7 +1039,7 @@
       "source_location": "L104",
       "_origin": "ast",
       "id": "services_icp_matching_pipeline_prefilter_drop_reason",
-      "community": 0,
+      "community": 2,
       "norm_label": "_prefilter_drop_reason()"
     },
     {
@@ -1129,7 +1049,7 @@
       "source_location": "L126",
       "_origin": "ast",
       "id": "services_icp_matching_pipeline_fetch_description",
-      "community": 0,
+      "community": 2,
       "norm_label": "_fetch_description()"
     },
     {
@@ -1139,7 +1059,7 @@
       "source_location": "L131",
       "_origin": "ast",
       "id": "services_icp_matching_pipeline_target_titles_for",
-      "community": 0,
+      "community": 1,
       "norm_label": "_target_titles_for()"
     },
     {
@@ -1159,7 +1079,7 @@
       "source_location": "L199",
       "_origin": "ast",
       "id": "services_icp_matching_pipeline_build_and_score_candidates",
-      "community": 0,
+      "community": 2,
       "norm_label": "build_and_score_candidates()"
     },
     {
@@ -1179,7 +1099,7 @@
       "source_location": "L401",
       "_origin": "ast",
       "id": "services_icp_matching_pipeline_approve_candidate",
-      "community": 0,
+      "community": 13,
       "norm_label": "approve_candidate()"
     },
     {
@@ -1199,7 +1119,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_icp_matching_pipeline_rationale_1",
-      "community": 0,
+      "community": 2,
       "norm_label": "theme-driven, multi-company icp matching pipeline (handoff 2).  replaces the o"
     },
     {
@@ -1209,7 +1129,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "services_icp_matching_pipeline_rationale_35",
-      "community": 0,
+      "community": 3,
       "norm_label": "returns (companies_fetched, total_leads) for this campaign so far.     companie"
     },
     {
@@ -1219,7 +1139,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "services_icp_matching_pipeline_rationale_51",
-      "community": 0,
+      "community": 3,
       "norm_label": "returns a human-readable reason string if either testing cap     (max_lead_fetc"
     },
     {
@@ -1229,7 +1149,7 @@
       "source_location": "L76",
       "_origin": "ast",
       "id": "services_icp_matching_pipeline_rationale_76",
-      "community": 0,
+      "community": 13,
       "norm_label": "once every needs_review candidate has a human decision (approved or     rejecte"
     },
     {
@@ -1239,7 +1159,7 @@
       "source_location": "L105",
       "_origin": "ast",
       "id": "services_icp_matching_pipeline_rationale_105",
-      "community": 0,
+      "community": 2,
       "norm_label": "re-derives a human-readable reason for why prefilter_candidates()     dropped t"
     },
     {
@@ -1259,7 +1179,7 @@
       "source_location": "L200",
       "_origin": "ast",
       "id": "services_icp_matching_pipeline_rationale_200",
-      "community": 0,
+      "community": 2,
       "norm_label": "runs theme extraction -> apollo keyword search -> prefilter -> scoring     -> b"
     },
     {
@@ -1279,7 +1199,7 @@
       "source_location": "L402",
       "_origin": "ast",
       "id": "services_icp_matching_pipeline_rationale_402",
-      "community": 0,
+      "community": 13,
       "norm_label": "human approves a single needs_review candidate from the streamlit     queue: ma"
     },
     {
@@ -1779,7 +1699,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_usage_tracker",
-      "community": 4,
+      "community": 13,
       "norm_label": "usage_tracker.py"
     },
     {
@@ -1789,7 +1709,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "services_usage_tracker_log_llm_usage",
-      "community": 4,
+      "community": 13,
       "norm_label": "log_llm_usage()"
     },
     {
@@ -1799,7 +1719,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "services_usage_tracker_log_apollo_usage",
-      "community": 4,
+      "community": 13,
       "norm_label": "log_apollo_usage()"
     },
     {
@@ -1809,7 +1729,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "services_usage_tracker_get_campaign_cost_summary",
-      "community": 4,
+      "community": 13,
       "norm_label": "get_campaign_cost_summary()"
     },
     {
@@ -1819,7 +1739,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_usage_tracker_rationale_1",
-      "community": 4,
+      "community": 13,
       "norm_label": "phase 7 (scaffolded, not yet wired into main.py's request flow).  logs openai"
     },
     {
@@ -1921,66 +1841,6 @@
       "id": "styles_rationale_73",
       "community": 59,
       "norm_label": "wrap an ad-hoc numeric/data value in the monospace class, for use     inside st."
-    },
-    {
-      "label": "test_api_client.py",
-      "file_type": "code",
-      "source_file": "tests/test_api_client.py",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "tests_test_api_client",
-      "community": 3,
-      "norm_label": "test_api_client.py"
-    },
-    {
-      "label": "test_run_campaign_posts_url_and_returns_json()",
-      "file_type": "code",
-      "source_file": "tests/test_api_client.py",
-      "source_location": "L8",
-      "_origin": "ast",
-      "id": "tests_test_api_client_test_run_campaign_posts_url_and_returns_json",
-      "community": 3,
-      "norm_label": "test_run_campaign_posts_url_and_returns_json()"
-    },
-    {
-      "label": "test_run_campaign_returns_soft_error_on_connection_failure()",
-      "file_type": "code",
-      "source_file": "tests/test_api_client.py",
-      "source_location": "L23",
-      "_origin": "ast",
-      "id": "tests_test_api_client_test_run_campaign_returns_soft_error_on_connection_failure",
-      "community": 3,
-      "norm_label": "test_run_campaign_returns_soft_error_on_connection_failure()"
-    },
-    {
-      "label": "test_get_campaign_returns_none_on_404()",
-      "file_type": "code",
-      "source_file": "tests/test_api_client.py",
-      "source_location": "L30",
-      "_origin": "ast",
-      "id": "tests_test_api_client_test_get_campaign_returns_none_on_404",
-      "community": 3,
-      "norm_label": "test_get_campaign_returns_none_on_404()"
-    },
-    {
-      "label": "test_list_campaigns_returns_empty_list_on_failure()",
-      "file_type": "code",
-      "source_file": "tests/test_api_client.py",
-      "source_location": "L40",
-      "_origin": "ast",
-      "id": "tests_test_api_client_test_list_campaigns_returns_empty_list_on_failure",
-      "community": 3,
-      "norm_label": "test_list_campaigns_returns_empty_list_on_failure()"
-    },
-    {
-      "label": "test_health_keys_returns_false_pair_on_failure()",
-      "file_type": "code",
-      "source_file": "tests/test_api_client.py",
-      "source_location": "L47",
-      "_origin": "ast",
-      "id": "tests_test_api_client_test_health_keys_returns_false_pair_on_failure",
-      "community": 3,
-      "norm_label": "test_health_keys_returns_false_pair_on_failure()"
     },
     {
       "label": "test_config_settings.py",
@@ -2139,7 +1999,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_pipeline_settings",
-      "community": 0,
+      "community": 3,
       "norm_label": "test_pipeline_settings.py"
     },
     {
@@ -2149,7 +2009,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "tests_test_pipeline_settings_isolated_settings",
-      "community": 0,
+      "community": 3,
       "norm_label": "isolated_settings()"
     },
     {
@@ -2159,7 +2019,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "tests_test_pipeline_settings_test_bucket_uses_default_thresholds",
-      "community": 0,
+      "community": 3,
       "norm_label": "test_bucket_uses_default_thresholds()"
     },
     {
@@ -2169,7 +2029,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "tests_test_pipeline_settings_test_bucket_respects_custom_threshold_from_settings",
-      "community": 0,
+      "community": 3,
       "norm_label": "test_bucket_respects_custom_threshold_from_settings()"
     },
     {
@@ -2179,7 +2039,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "tests_test_pipeline_settings_test_lead_fetch_cap_reason_none_when_uncapped",
-      "community": 0,
+      "community": 3,
       "norm_label": "test_lead_fetch_cap_reason_none_when_uncapped()"
     },
     {
@@ -2189,7 +2049,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "tests_test_pipeline_settings_test_lead_fetch_cap_reason_fires_from_settings",
-      "community": 0,
+      "community": 3,
       "norm_label": "test_lead_fetch_cap_reason_fires_from_settings()"
     },
     {
@@ -2259,7 +2119,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_usage_pricing_settings",
-      "community": 4,
+      "community": 13,
       "norm_label": "test_usage_pricing_settings.py"
     },
     {
@@ -2269,7 +2129,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "tests_test_usage_pricing_settings_test_total_cost_uses_custom_pricing_from_settings",
-      "community": 4,
+      "community": 13,
       "norm_label": "test_total_cost_uses_custom_pricing_from_settings()"
     },
     {
@@ -2279,7 +2139,7 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "tests_test_usage_pricing_settings_test_apollo_usage_uses_custom_credit_costs_from_settings",
-      "community": 4,
+      "community": 13,
       "norm_label": "test_apollo_usage_uses_custom_credit_costs_from_settings()"
     },
     {
@@ -2289,7 +2149,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "tests_test_usage_pricing_settings_rationale_14",
-      "community": 4,
+      "community": 13,
       "norm_label": "test that get_total_cost reads llm pricing from settings store."
     },
     {
@@ -2299,7 +2159,7 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "tests_test_usage_pricing_settings_rationale_60",
-      "community": 4,
+      "community": 13,
       "norm_label": "test that log_apollo_usage reads apollo credit costs from settings store."
     },
     {
@@ -2336,7 +2196,7 @@
       "label": "In Progress",
       "file_type": "document",
       "source_file": ".superpowers/sdd/progress.md",
-      "source_location": "L12",
+      "source_location": "L11",
       "_origin": "ast",
       "id": "superpowers_sdd_progress_in_progress",
       "community": 21,
@@ -2346,7 +2206,7 @@
       "label": "Remaining",
       "file_type": "document",
       "source_file": ".superpowers/sdd/progress.md",
-      "source_location": "L16",
+      "source_location": "L15",
       "_origin": "ast",
       "id": "superpowers_sdd_progress_remaining",
       "community": 21,
@@ -4050,87 +3910,6 @@
     }
   ],
   "links": [
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "api_client.py",
-      "source_location": "L43",
-      "weight": 1.0,
-      "source": "api_client",
-      "target": "api_client_approve_candidate",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "api_client.py",
-      "source_location": "L24",
-      "weight": 1.0,
-      "source": "api_client",
-      "target": "api_client_get_campaign",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "api_client.py",
-      "source_location": "L65",
-      "weight": 1.0,
-      "source": "api_client",
-      "target": "api_client_health_keys",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "api_client.py",
-      "source_location": "L33",
-      "weight": 1.0,
-      "source": "api_client",
-      "target": "api_client_list_campaigns",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "api_client.py",
-      "source_location": "L54",
-      "weight": 1.0,
-      "source": "api_client",
-      "target": "api_client_reject_candidate",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "api_client.py",
-      "source_location": "L11",
-      "weight": 1.0,
-      "source": "api_client",
-      "target": "api_client_run_campaign",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "api_client.py",
-      "source_location": "L1",
-      "weight": 1.0,
-      "source": "api_client_rationale_1",
-      "target": "api_client",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "tests/test_api_client.py",
-      "source_location": "L5",
-      "weight": 1.0,
-      "source": "tests_test_api_client",
-      "target": "api_client",
-      "confidence_score": 1.0
-    },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
@@ -8827,56 +8606,6 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "tests/test_api_client.py",
-      "source_location": "L30",
-      "weight": 1.0,
-      "source": "tests_test_api_client",
-      "target": "tests_test_api_client_test_get_campaign_returns_none_on_404",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "tests/test_api_client.py",
-      "source_location": "L47",
-      "weight": 1.0,
-      "source": "tests_test_api_client",
-      "target": "tests_test_api_client_test_health_keys_returns_false_pair_on_failure",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "tests/test_api_client.py",
-      "source_location": "L40",
-      "weight": 1.0,
-      "source": "tests_test_api_client",
-      "target": "tests_test_api_client_test_list_campaigns_returns_empty_list_on_failure",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "tests/test_api_client.py",
-      "source_location": "L8",
-      "weight": 1.0,
-      "source": "tests_test_api_client",
-      "target": "tests_test_api_client_test_run_campaign_posts_url_and_returns_json",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "tests/test_api_client.py",
-      "source_location": "L23",
-      "weight": 1.0,
-      "source": "tests_test_api_client",
-      "target": "tests_test_api_client_test_run_campaign_returns_soft_error_on_connection_failure",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
       "source_file": "tests/test_config_settings.py",
       "source_location": "L9",
       "weight": 1.0,
@@ -9168,7 +8897,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".superpowers/sdd/progress.md",
-      "source_location": "L12",
+      "source_location": "L11",
       "weight": 1.0,
       "source": "superpowers_sdd_progress_ui_overhaul_implementation_progress",
       "target": "superpowers_sdd_progress_in_progress",
@@ -9178,7 +8907,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".superpowers/sdd/progress.md",
-      "source_location": "L16",
+      "source_location": "L15",
       "weight": 1.0,
       "source": "superpowers_sdd_progress_ui_overhaul_implementation_progress",
       "target": "superpowers_sdd_progress_remaining",
@@ -10333,5 +10062,5 @@
       "source_file": "handoff-2-pipeline-wiring-spec.md"
     }
   ],
-  "built_at_commit": "6ed9a30c49f41ca5e3730f40a799b93b167fe6a3"
+  "built_at_commit": "d8bfddc55cd5380e16dccb183986fe4b4ce0f3b0"
 }

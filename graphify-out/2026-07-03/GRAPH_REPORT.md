@@ -1,16 +1,16 @@
 # Graph Report - ui-overhaul  (2026-07-03)
 
 ## Corpus Check
-- 41 files · ~33,839 words
+- 39 files · ~33,513 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 384 nodes · 595 edges · 60 communities (23 shown, 37 thin omitted)
+- 370 nodes · 582 edges · 60 communities (24 shown, 36 thin omitted)
 - Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 12 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `6ed9a30c`
+- Built from commit: `d8bfddc5`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -83,16 +83,16 @@
 10. `load_settings()` - 9 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `get_campaign()` --calls--> `get_conn()`  [EXTRACTED]
-  main.py → database.py
-- `list_campaigns()` --calls--> `get_conn()`  [EXTRACTED]
-  main.py → database.py
-- `startup()` --calls--> `init_db()`  [EXTRACTED]
-  main.py → database.py
 - `test_health_keys_never_returns_key_value()` --indirect_call--> `main()`  [INFERRED]
   tests/test_health_endpoint.py → services/icp_matching/test_calibration.py
 - `test_health_keys_reports_missing_when_unset()` --indirect_call--> `main()`  [INFERRED]
   tests/test_health_endpoint.py → services/icp_matching/test_calibration.py
+- `test_health_keys_reports_present_when_both_set()` --indirect_call--> `main()`  [INFERRED]
+  tests/test_health_endpoint.py → services/icp_matching/test_calibration.py
+- `log_llm_usage()` --calls--> `get_llm_pricing()`  [EXTRACTED]
+  services/usage_tracker.py → config.py
+- `log_apollo_usage()` --calls--> `get_apollo_credit_costs()`  [EXTRACTED]
+  services/usage_tracker.py → config.py
 
 ## Import Cycles
 - None detected.
@@ -102,23 +102,27 @@
 - **ICP Venn-diagram standalone module set (Handoff 1)** — services_icp_matching_theme_extraction_py, services_icp_matching_prefilter_py, services_icp_matching_scoring_py, services_icp_matching_test_calibration_py, data_icp_config_json [EXTRACTED 1.00]
 - **Live pipeline wiring deliverables (Handoff 2)** — services_icp_matching_pipeline_py, migrations_002_add_icp_tables_py, handoff2_bucket_thresholds, handoff2_review_ui, handoff2_cost_tracking_tie_in [EXTRACTED 1.00]
 
-## Communities (60 total, 37 thin omitted)
+## Communities (60 total, 36 thin omitted)
 
 ### Community 0 - "Campaign Pipeline Orchestration"
-Cohesion: 0.08
-Nodes (48): AsyncClient, load_product_catalog(), approve_candidate_endpoint(), run_campaign(), Response, find_leads(), _guess_domain(), _headers() (+40 more)
+Cohesion: 0.14
+Nodes (24): AsyncClient, Response, find_leads(), _guess_domain(), _headers(), _lead_from_matched_person(), normalize_seniority(), Apollo.io integration: - Domain resolution: org search (primary) -> DNS pattern (+16 more)
 
 ### Community 1 - "Outreach Copy Generation"
-Cohesion: 0.20
-Nodes (13): ChannelCopy, _enforce_channel_constraints(), generate_all_copy(), generate_copy_for_lead(), _generate_one(), _product_for(), _prompt(), Generates personalized outreach copy per lead per channel (email, whatsapp, goo (+5 more)
+Cohesion: 0.16
+Nodes (16): BaseModel, load_product_catalog(), ChannelCopy, _enforce_channel_constraints(), generate_all_copy(), generate_copy_for_lead(), _generate_one(), _product_for() (+8 more)
 
 ### Community 2 - "ICP Prefilter & Calibration Testing"
 Cohesion: 0.10
-Nodes (27): load_icp_config(), prefilter_candidates(), Deterministic, non-LLM pre-filter: drops candidate companies that are obviously, _build_prompt(), CandidateScore, Scores a single Apollo-style candidate company against Reinvent's ICP using an, Scores all companies in parallel (asyncio.gather pattern from     services/copy, score_candidate() (+19 more)
+Nodes (33): load_icp_config(), build_and_score_candidates(), _fetch_description(), _prefilter_drop_reason(), Theme-driven, multi-company ICP matching pipeline (Handoff 2).  Replaces the o, Re-derives a human-readable reason for why prefilter_candidates()     dropped t, Runs theme extraction -> Apollo keyword search -> prefilter -> scoring     -> b, prefilter_candidates() (+25 more)
+
+### Community 3 - "Apollo Lead Search & Enrichment"
+Cohesion: 0.25
+Nodes (9): _bucket(), _campaign_lead_fetch_counts(), _lead_fetch_cap_reason(), Returns (companies_fetched, total_leads) for this campaign so far.     companie, Returns a human-readable reason string if either testing cap     (max_lead_fetc, test_bucket_respects_custom_threshold_from_settings(), test_bucket_uses_default_thresholds(), test_lead_fetch_cap_reason_fires_from_settings() (+1 more)
 
 ### Community 4 - "ICP Scoring & Usage Tracking"
-Cohesion: 0.11
-Nodes (39): Any, get_apollo_credit_cost_usd(), get_apollo_credit_costs(), get_approve_threshold(), get_llm_pricing(), get_max_lead_fetch_companies(), get_max_leads_per_campaign(), get_review_threshold() (+31 more)
+Cohesion: 0.14
+Nodes (23): Any, get_apollo_credit_cost_usd(), get_apollo_credit_costs(), get_approve_threshold(), get_llm_pricing(), get_max_lead_fetch_companies(), get_max_leads_per_campaign(), get_review_threshold() (+15 more)
 
 ### Community 5 - "Core App Files & Dependencies"
 Cohesion: 0.21
@@ -133,8 +137,8 @@ Cohesion: 0.36
 Nodes (9): check(), End-to-end test suite. Run with: python campaign_test.py Requires uvicorn main:, test_analyze(), test_click_logging(), test_database_integrity(), test_full_campaign(), test_health(), test_list_campaigns() (+1 more)
 
 ### Community 13 - "main.py"
-Cohesion: 0.13
-Nodes (18): BaseModel, product_ids(), analyze_endpoint(), CampaignRequest, get_campaign(), health_keys(), list_campaigns(), FastAPI backend. Single /campaign endpoint orchestrates: scrape -> (context ext (+10 more)
+Cohesion: 0.09
+Nodes (40): product_ids(), Connection, get_conn(), init_db(), _migrate(), now_iso(), SQLite schema + connection management. Zero-DevOps choice for MVP. Migrate to P, Additive, idempotent column migrations for DBs created before a schema     chan (+32 more)
 
 ### Community 14 - "ICP Matching Package Init"
 Cohesion: 0.10
@@ -175,22 +179,22 @@ Nodes (14): inject_base_styles(), mono(), Central CSS + small visual-component h
 ## Knowledge Gaps
 - **114 isolated node(s):** `Completed Tasks`, `In Progress`, `Remaining`, `What this is`, `Non-negotiable design decisions (do not silently change these)` (+109 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **37 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **36 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `get_conn()` connect `ICP Scoring & Usage Tracking` to `Campaign Pipeline Orchestration`, `main.py`?**
-  _High betweenness centrality (0.027) - this node is a cross-community bridge._
-- **Why does `build_and_score_candidates()` connect `Campaign Pipeline Orchestration` to `ICP Prefilter & Calibration Testing`, `ICP Scoring & Usage Tracking`, `main.py`?**
-  _High betweenness centrality (0.007) - this node is a cross-community bridge._
-- **Why does `log_llm_usage()` connect `ICP Scoring & Usage Tracking` to `Outreach Copy Generation`, `ICP Prefilter & Calibration Testing`, `main.py`?**
-  _High betweenness centrality (0.007) - this node is a cross-community bridge._
-- **What connects `Thin wrapper over every HTTP call the Streamlit UI makes to the FastAPI backend.`, `End-to-end test suite. Run with: python campaign_test.py Requires uvicorn main:`, `Environment variable management + product catalog loading.` to the rest of the system?**
-  _176 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Why does `get_conn()` connect `main.py` to `Campaign Pipeline Orchestration`, `ICP Prefilter & Calibration Testing`, `Apollo Lead Search & Enrichment`, `ICP Scoring & Usage Tracking`?**
+  _High betweenness centrality (0.030) - this node is a cross-community bridge._
+- **Why does `build_and_score_candidates()` connect `ICP Prefilter & Calibration Testing` to `Campaign Pipeline Orchestration`, `Apollo Lead Search & Enrichment`, `main.py`?**
+  _High betweenness centrality (0.008) - this node is a cross-community bridge._
+- **Why does `log_llm_usage()` connect `main.py` to `Outreach Copy Generation`, `ICP Prefilter & Calibration Testing`, `ICP Scoring & Usage Tracking`?**
+  _High betweenness centrality (0.008) - this node is a cross-community bridge._
+- **What connects `End-to-end test suite. Run with: python campaign_test.py Requires uvicorn main:`, `Environment variable management + product catalog loading.`, `Runtime-editable settings (thresholds, testing caps, pricing).     Falls back t` to the rest of the system?**
+  _175 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Campaign Pipeline Orchestration` be split into smaller, more focused modules?**
-  _Cohesion score 0.07547169811320754 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.14461538461538462 - nodes in this community are weakly interconnected._
 - **Should `ICP Prefilter & Calibration Testing` be split into smaller, more focused modules?**
-  _Cohesion score 0.09982174688057041 - nodes in this community are weakly interconnected._
-- **Should `Apollo Lead Search & Enrichment` be split into smaller, more focused modules?**
-  _Cohesion score 0.14285714285714285 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.0951219512195122 - nodes in this community are weakly interconnected._
+- **Should `ICP Scoring & Usage Tracking` be split into smaller, more focused modules?**
+  _Cohesion score 0.14245014245014245 - nodes in this community are weakly interconnected._

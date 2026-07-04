@@ -1,0 +1,162 @@
+import tempfile
+import json
+import os
+from pathlib import Path
+from unittest.mock import patch
+
+from services.usage_dashboard import get_total_cost, get_cost_by_operation, get_cost_by_model, get_cost_per_campaign
+from services.usage_tracker import log_llm_usage, log_apollo_usage
+from database import init_db, get_conn, now_iso
+import config
+
+
+def test_usage_dashboard_reads_pricing_from_settings():
+    """Test that usage dashboard reads pricing from settings store rather than hardcoded constants."""
+    # Create a temporary settings file with custom pricing
+    with tempfile.TemporaryDirectory() as tmpdir:
+        settings_path = Path(tmpdir) / "settings.json"
+        custom_settings = {
+            "llm_pricing": {
+                "gpt-4o-mini": {"input": 0.30, "output": 1.20},  # Double the defaults
+                "gpt-4o": {"input": 10.00, "output": 30.00}  # Double the defaults
+            },
+            "apollo_credit_costs": {"email": 2, "phone": 16},  # Double the defaults
+            "apollo_credit_cost_usd": 0.0412  # Double the default
+        }
+
+        with open(settings_path, "w") as f:
+            json.dump(custom_settings, f)
+
+        # Mock the settings path to point to our temporary file
+        with patch('config.SETTINGS_PATH', settings_path):
+            # Initialize a test database in the temp directory
+            db_path = Path(tmpdir) / "test_campaigns.db"
+            with patch('config.DATABASE_PATH', str(db_path)):
+                init_db()  # Initialize the database
+
+                # Clear any existing campaigns to ensure clean state
+                with get_conn() as conn:
+                    conn.execute("DELETE FROM campaigns")
+                    conn.execute("DELETE FROM usage_log")
+                    conn.execute("DELETE FROM leads")
+                    conn.commit()
+
+                # Log some usage
+                with get_conn() as conn:
+                    conn.execute(
+                        "INSERT INTO campaigns (url, created_at) VALUES (?, ?)",
+                        ("https://example.com/article", now_iso())
+                    )
+                    campaign_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+
+                # Log LLM usage: 1M input tokens, 1M output tokens for gpt-4o-mini
+                log_llm_usage(campaign_id, "gpt-4o-mini", "test_operation", 1000000, 1000000)
+
+                # Log Apollo usage: 10 email credits
+                log_apollo_usage(campaign_id, "test_operation", emails=10)
+
+                # Check that Apollo usage was logged correctly (credits should be 20)
+                with get_conn() as conn:
+                    row = conn.execute(
+                        "SELECT credits_used FROM usage_log WHERE campaign_id = ? AND service = 'apollo'",
+                        (campaign_id,)
+                    ).fetchone()
+
+                # Expected credits: 10 emails * 2 credits/email = 20
+                assert row["credits_used"] == 20
+
+                # Test get_total_cost uses custom pricing
+                total_cost = get_total_cost(campaign_id)
+                # Expected LLM cost: (1M/1M)*0.30 + (1M/1M)*1.20 = 0.30 + 1.20 = 1.50
+                # Expected Apollo cost: 20 credits * 0.0412 USD/credit = 0.824 USD
+                # Total = 1.50 + 0.824 = 2.324
+                assert total_cost["openai_usd"] == 1.50
+                assert total_cost["apollo_credits"] == 20
+                assert abs(total_cost["apollo_usd"] - 0.824) < 0.001  # Allow for floating point precision
+                assert abs(total_cost["total_usd"] - 2.324) < 0.001  # Allow for floating point precision
+
+                # Test get_cost_by_operation uses custom pricing
+                op_costs = get_cost_by_operation(campaign_id)
+                assert len(op_costs) == 1
+                assert op_costs[0]["operation"] == "test_operation"
+                assert op_costs[0]["total_usd"] == 1.50  # Only the LLM cost
+
+                # Test get_cost_by_model uses custom pricing
+                model_costs = get_cost_by_model(campaign_id)
+                assert len(model_costs) == 1
+                assert model_costs[0]["model"] == "gpt-4o-mini"
+                assert model_costs[0]["total_usd"] == 1.50
+
+                # Test get_cost_per_campaign uses custom pricing
+                campaign_costs = get_cost_per_campaign()
+                assert len(campaign_costs) == 1
+                assert campaign_costs[0]["campaign_id"] == campaign_id
+                assert campaign_costs[0]["openai_usd"] == 1.50
+                assert campaign_costs[0]["apollo_credits"] == 20
+                assert abs(campaign_costs[0]["apollo_usd"] - 0.824) < 0.001
+                assert abs(campaign_costs[0]["total_usd"] - 2.324) < 0.001
+
+
+def test_usage_tracker_reads_pricing_from_settings():
+    """Test that usage tracker reads pricing from settings store."""
+    # Create a temporary settings file with custom pricing
+    with tempfile.TemporaryDirectory() as tmpdir:
+        settings_path = Path(tmpdir) / "settings.json"
+        custom_settings = {
+            "llm_pricing": {
+                "gpt-4o-mini": {"input": 0.30, "output": 1.20}  # Double the defaults
+            },
+            "apollo_credit_costs": {"email": 2, "phone": 16},  # Double the defaults
+            "apollo_credit_cost_usd": 0.0412  # Double the default
+        }
+
+        with open(settings_path, "w") as f:
+            json.dump(custom_settings, f)
+
+        # Mock the settings path to point to our temporary file
+        with patch('config.SETTINGS_PATH', settings_path):
+            # Initialize a test database in the temp directory
+            db_path = Path(tmpdir) / "test_campaigns.db"
+            with patch('config.DATABASE_PATH', str(db_path)):
+                init_db()  # Initialize the database
+
+                # Clear any existing campaigns to ensure clean state
+                with get_conn() as conn:
+                    conn.execute("DELETE FROM campaigns")
+                    conn.execute("DELETE FROM usage_log")
+                    conn.execute("DELETE FROM leads")
+                    conn.commit()
+
+                # Log some usage
+                with get_conn() as conn:
+                    conn.execute(
+                        "INSERT INTO campaigns (url, created_at) VALUES (?, ?)",
+                        ("https://example.com/article", now_iso())
+                    )
+                    campaign_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+
+                # Log LLM usage: 1M input tokens, 1M output tokens for gpt-4o-mini
+                log_llm_usage(campaign_id, "gpt-4o-mini", "test_operation", 1000000, 1000000)
+
+                # Check that the cost was calculated correctly using custom pricing
+                with get_conn() as conn:
+                    row = conn.execute(
+                        "SELECT cost_usd FROM usage_log WHERE campaign_id = ? AND service = 'openai'",
+                        (campaign_id,)
+                    ).fetchone()
+
+                # Expected cost: (1M/1M)*0.30 + (1M/1M)*1.20 = 0.30 + 1.20 = 1.50
+                assert row["cost_usd"] == 1.50
+
+                # Log Apollo usage: 10 email credits
+                log_apollo_usage(campaign_id, "test_operation", emails=10)
+
+                # Check that Apollo usage was logged correctly (credits should be 20)
+                with get_conn() as conn:
+                    row = conn.execute(
+                        "SELECT credits_used FROM usage_log WHERE campaign_id = ? AND service = 'apollo'",
+                        (campaign_id,)
+                    ).fetchone()
+
+                # Expected credits: 10 emails * 2 credits/email = 20
+                assert row["credits_used"] == 20
