@@ -61,6 +61,18 @@ def get_review_threshold() -> int:
     return load_settings()["review_threshold"]
 
 
+def set_approve_threshold(value: int) -> None:
+    settings = load_settings()
+    settings["approve_threshold"] = value
+    save_settings(settings)
+
+
+def set_review_threshold(value: int) -> None:
+    settings = load_settings()
+    settings["review_threshold"] = value
+    save_settings(settings)
+
+
 def get_max_lead_fetch_companies() -> int | None:
     return load_settings()["max_lead_fetch_companies"]
 
